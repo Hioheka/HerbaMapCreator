@@ -1,0 +1,1293 @@
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herba Map Creator v.0.0.1</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 1200px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, button {
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .map-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .map-visual {
+            border: 3px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .code-section {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .json-output {
+            background: #1a1a1a;
+            color: #0f0;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 2px solid #333;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.8);
+            padding: 8px 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #333;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            animation: pulse 1.5s infinite;
+        }
+
+        .edit-controls {
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .edit-controls h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            text-align: center;
+        }
+
+        .brush-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .brush-item {
+            padding: 10px 15px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .brush-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .brush-item.active {
+            border-color: #333;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+        }
+
+        .brush-size {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .brush-size input[type="range"] {
+            width: 150px;
+        }
+
+        .brush-size label, .brush-size span {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .map-visual {
+            cursor: crosshair;
+        }
+
+        .map-visual.editing {
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ Herba Map Creator v.0.0.1</h1>
+        
+        <div class="controls">
+            <div class="input-group">
+                <label for="width">Width (X):</label>
+                <input type="number" id="width" value="100" min="10" max="200">
+            </div>
+            <div class="input-group">
+                <label for="height">Height (Y):</label>
+                <input type="number" id="height" value="100" min="10" max="200">
+            </div>
+            <button onclick="generateMap()">🎲 Generate Map</button>
+            <button onclick="updateCode()">🔄 Update Code</button>
+            <button onclick="copyToClipboard()">📋 Copy C# Code</button>
+            <button onclick="toggleEditMode()" id="editModeBtn">🖌️ Editor Mode</button>
+            <button onclick="clearMap()" style="background: linear-gradient(135deg, #ff6b6b, #ee5a5a);">🗑️ Clear Map</button>
+        </div>
+
+        <div id="editControls" class="edit-controls" style="display: none;">
+            <h3>🎨 Drawing Tools</h3>
+            <div class="brush-selector">
+                <div class="brush-item" data-surface="1" style="background: lightgreen;">
+                    <span>1 - Plains</span>
+                </div>
+                <div class="brush-item active" data-surface="2" style="background: gray; color: white;">
+                    <span>2 - Mountains</span>
+                </div>
+                <div class="brush-item" data-surface="3" style="background: blue; color: white;">
+                    <span>3 - Shallow Water</span>
+                </div>
+                <div class="brush-item" data-surface="4" style="background: darkblue; color: white;">
+                    <span>4 - Deep Water</span>
+                </div>
+                <div class="brush-item" data-surface="5" style="background: darkgreen; color: white;">
+                    <span>5 - Forest</span>
+                </div>
+            </div>
+            <div class="brush-size">
+                <label>Brush Size:</label>
+                <input type="range" id="brushSize" min="1" max="5" value="1">
+                <span id="brushSizeValue">1</span>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: lightgreen;"></div>
+                <span>1 - Plains</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: gray;"></div>
+                <span>2 - Mountains</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: blue;"></div>
+                <span>3 - Shallow Water</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: darkblue;"></div>
+                <span>4 - Deep Water</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: darkgreen;"></div>
+                <span>5 - Forest</span>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">Generating map...</div>
+
+        <div class="map-container" id="mapContainer"></div>
+    </div>
+
+    <script>
+		function updateCode() {
+						if (!currentGenerator) {
+							alert('Please generate a map first!');
+							return;
+						}
+						
+						currentGenerator.updateCodeOutput();
+						alert('Code updated successfully!');
+					}
+        class MapGenerator {
+            constructor(width, height) {
+                this.width = width;
+                this.height = height;
+                this.map = [];
+                this.colors = {
+                    1: 'lightgreen', // Plains
+                    2: 'gray',       // Mountains
+                    3: 'blue',       // Shallow water
+                    4: 'darkblue',   // Deep water
+                    5: 'darkgreen'   // Forest
+                };
+                this.isEditMode = false;
+                this.currentBrush = 2;
+                this.brushSize = 1;
+                this.canvas = null;
+                this.ctx = null;
+                this.cellSize = 0;
+                this.isDrawing = false;
+                this.initializeMap();
+            }
+
+            initializeMap() {
+                this.map = Array(this.height).fill(null).map(() => 
+                    Array(this.width).fill(1)
+                );
+            }
+
+            // Perlin noise benzeri fonksiyon
+            noise(x, y, frequency = 0.1) {
+                return (Math.sin(x * frequency) + Math.sin(y * frequency) + 
+                        Math.sin((x + y) * frequency * 0.5)) / 3;
+            }
+
+            // Gelişmiş noise fonksiyonu
+            improvedNoise(x, y, octaves = 4, persistence = 0.5, scale = 0.1) {
+                let value = 0;
+                let amplitude = 1;
+                let frequency = scale;
+                let maxValue = 0;
+
+                for (let i = 0; i < octaves; i++) {
+                    value += this.noise(x, y, frequency) * amplitude;
+                    maxValue += amplitude;
+                    amplitude *= persistence;
+                    frequency *= 2;
+                }
+
+                return value / maxValue;
+            }
+
+            // Yükseklik haritası oluştur
+            generateHeightMap() {
+                const heightMap = Array(this.height).fill(null).map(() => Array(this.width).fill(0));
+                
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        // Ana arazi formu - çok daha yumuşak
+                        let height = this.improvedNoise(x, y, 3, 0.4, 0.02);
+                        
+                        // Dağ tepeleri - çok seyrek ve küçük
+                        const mountainNoise = this.improvedNoise(x, y, 2, 0.8, 0.015);
+                        if (mountainNoise > 0.6) {
+                            height += mountainNoise * 0.3; // Çok daha az etki
+                        }
+                        
+                        // Kenar efekti - kıyıya doğru alçalma
+                        const edgeDistance = Math.min(x, y, this.width - x - 1, this.height - y - 1);
+                        const edgeFactor = Math.min(1, edgeDistance / 12);
+                        height *= edgeFactor;
+                        
+                        heightMap[y][x] = height;
+                    }
+                }
+                
+                return heightMap;
+            }
+
+            // Gerçekçi su kütleleri oluştur
+            generateRealisticWater(heightMap) {
+                // Deniz seviyesi belirle
+                const seaLevel = -0.15;
+                
+                // Denizleri oluştur
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        if (heightMap[y][x] < seaLevel) {
+                            this.map[y][x] = 4; // Derin su
+                        }
+                    }
+                }
+                
+                // Sığ su alanları - derin suyun kenarları
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        if (this.map[y][x] === 1 && heightMap[y][x] < seaLevel + 0.1) {
+                            // Yakında derin su var mı kontrol et
+                            let nearDeepWater = false;
+                            for (let dy = -2; dy <= 2; dy++) {
+                                for (let dx = -2; dx <= 2; dx++) {
+                                    const nx = x + dx;
+                                    const ny = y + dy;
+                                    if (this.isValidPosition(nx, ny) && this.map[ny][nx] === 4) {
+                                        nearDeepWater = true;
+                                        break;
+                                    }
+                                }
+                                if (nearDeepWater) break;
+                            }
+                            
+                            if (nearDeepWater) {
+                                this.map[y][x] = 3; // Sığ su
+                            }
+                        }
+                    }
+                }
+                
+                // İç göller
+                this.generateInlandLakes(heightMap);
+                
+                // Nehirler
+                this.generateRealisticRivers(heightMap);
+            }
+
+            // İç göller oluştur
+            generateInlandLakes(heightMap) {
+                const numLakes = Math.floor(Math.random() * 3) + 2;
+                
+                for (let i = 0; i < numLakes; i++) {
+                    // Düşük rakımda göl merkezi bul
+                    let bestX = 0, bestY = 0, minHeight = Infinity;
+                    
+                    for (let attempt = 0; attempt < 50; attempt++) {
+                        const x = Math.floor(Math.random() * (this.width - 10)) + 5;
+                        const y = Math.floor(Math.random() * (this.height - 10)) + 5;
+                        
+                        if (heightMap[y][x] < minHeight && this.map[y][x] === 1) {
+                            minHeight = heightMap[y][x];
+                            bestX = x;
+                            bestY = y;
+                        }
+                    }
+                    
+                    // Göl oluştur
+                    const lakeSize = Math.floor(Math.random() * 20) + 10;
+                    this.createLake(bestX, bestY, lakeSize, heightMap);
+                }
+            }
+
+            createLake(centerX, centerY, size, heightMap) {
+                const baseHeight = heightMap[centerY][centerX];
+                const lakeDepth = 0.05;
+                
+                for (let y = centerY - size; y <= centerY + size; y++) {
+                    for (let x = centerX - size; x <= centerX + size; x++) {
+                        if (!this.isValidPosition(x, y)) continue;
+                        
+                        const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
+                        const normalizedDist = distance / size;
+                        
+                        if (normalizedDist <= 1 && heightMap[y][x] <= baseHeight + lakeDepth) {
+                            // Merkeze yakın derin su
+                            if (normalizedDist <= 0.4) {
+                                this.map[y][x] = 4;
+                            }
+                            // Kenarlarda sığ su
+                            else if (normalizedDist <= 0.8) {
+                                this.map[y][x] = 3;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Gerçekçi nehirler
+            generateRealisticRivers(heightMap) {
+                const numRivers = Math.floor(Math.random() * 3) + 2;
+                
+                for (let i = 0; i < numRivers; i++) {
+                    // Yüksek yerden başla
+                    let startX, startY, maxHeight = -Infinity;
+                    
+                    for (let attempt = 0; attempt < 30; attempt++) {
+                        const x = Math.floor(Math.random() * this.width);
+                        const y = Math.floor(Math.random() * this.height);
+                        
+                        if (heightMap[y][x] > maxHeight && this.map[y][x] === 1) {
+                            maxHeight = heightMap[y][x];
+                            startX = x;
+                            startY = y;
+                        }
+                    }
+                    
+                    this.traceMeanderingRiver(startX, startY, heightMap);
+                }
+            }
+
+            traceMeanderingRiver(startX, startY, heightMap) {
+                let currentX = startX;
+                let currentY = startY;
+                const maxLength = 80;
+                const visited = new Set();
+                
+                // Menderesler için yön ve momentum
+                let currentDirection = Math.random() * Math.PI * 2; // Rastgele başlangıç yönü
+                let momentum = 0.7; // Yön değiştirme direnci
+                let meanderStrength = 0.3; // Menderes yapma gücü
+                
+                for (let step = 0; step < maxLength; step++) {
+                    const key = `${currentX},${currentY}`;
+                    if (visited.has(key) || !this.isValidPosition(currentX, currentY)) break;
+                    
+                    visited.add(key);
+                    
+                    // Su buldu mu?
+                    if (this.map[currentY][currentX] === 3 || this.map[currentY][currentX] === 4) {
+                        break;
+                    }
+                    
+                    this.map[currentY][currentX] = 3;
+                    
+                    // En düşük komşuya doğru ana yön
+                    let bestDirection = this.findDownhillDirection(currentX, currentY, heightMap);
+                    
+                    // Mevcut yön ile en düşük yön arasında menderes yap
+                    if (bestDirection !== null) {
+                        // Yön farkını hesapla
+                        let angleDiff = bestDirection - currentDirection;
+                        
+                        // Açıyı normalize et (-π, π arası)
+                        while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                        
+                        // Momentum ile yön güncelle - ani değişiklikler yerine kademeli
+                        currentDirection += angleDiff * (1 - momentum);
+                        
+                        // Menderes ekle - rastgele sapma
+                        const meanderAngle = (Math.random() - 0.5) * meanderStrength;
+                        currentDirection += meanderAngle;
+                        
+                        // Momentum zamanla azalsın (nehir aşağı doğru inerken daha kararlı)
+                        momentum = Math.max(0.3, momentum - 0.01);
+                    }
+                    
+                    // Yeni pozisyonu hesapla
+                    const stepSize = 1;
+                    const nextX = Math.round(currentX + Math.cos(currentDirection) * stepSize);
+                    const nextY = Math.round(currentY + Math.sin(currentDirection) * stepSize);
+                    
+                    // Sınırları kontrol et
+                    if (!this.isValidPosition(nextX, nextY)) {
+                        // Sınıra çarpırsa yönü değiştir
+                        currentDirection += Math.PI / 4; // 45 derece döndür
+                        continue;
+                    }
+                    
+                    // Çok yüksek yere çıkıyorsa menderes yap
+                    if (heightMap[nextY][nextX] > heightMap[currentY][currentX] + 0.1) {
+                        currentDirection += (Math.random() - 0.5) * Math.PI / 2; // 90 derece kadar sapma
+                        continue;
+                    }
+                    
+                    currentX = nextX;
+                    currentY = nextY;
+                    
+                    // Nehir genişletme - bazen yan kareleri de su yap
+                    if (step > 10 && Math.random() < 0.2) {
+                        this.widenRiver(currentX, currentY, 1);
+                    }
+                }
+            }
+
+            // Aşağı doğru en uygun yönü bul
+            findDownhillDirection(x, y, heightMap) {
+                const currentHeight = heightMap[y][x];
+                let bestDirection = null;
+                let maxDrop = 0;
+                
+                // 8 yönü kontrol et
+                const directions = [
+                    [0, -1, 0],           // Kuzey
+                    [1, -1, Math.PI/4],   // Kuzeydoğu
+                    [1, 0, Math.PI/2],    // Doğu
+                    [1, 1, 3*Math.PI/4],  // Güneydoğu
+                    [0, 1, Math.PI],      // Güney
+                    [-1, 1, 5*Math.PI/4], // Güneybatı
+                    [-1, 0, 3*Math.PI/2], // Batı
+                    [-1, -1, 7*Math.PI/4] // Kuzeybatı
+                ];
+                
+                for (const [dx, dy, angle] of directions) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    
+                    if (this.isValidPosition(nx, ny)) {
+                        const heightDrop = currentHeight - heightMap[ny][nx];
+                        if (heightDrop > maxDrop) {
+                            maxDrop = heightDrop;
+                            bestDirection = angle;
+                        }
+                    }
+                }
+                
+                return bestDirection;
+            }
+
+            // Nehir genişletme
+            widenRiver(centerX, centerY, radius) {
+                for (let dx = -radius; dx <= radius; dx++) {
+                    for (let dy = -radius; dy <= radius; dy++) {
+                        const nx = centerX + dx;
+                        const ny = centerY + dy;
+                        
+                        if (this.isValidPosition(nx, ny) && this.map[ny][nx] === 1) {
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            if (distance <= radius && Math.random() < 0.7) {
+                                this.map[ny][nx] = 3;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Gerçekçi dağlar - çok daha az dağ
+            generateRealisticMountains(heightMap) {
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        if (this.map[y][x] === 1) { // Sadece kara parçalarında
+                            // ÇOK daha yüksek eşik - sadece en yüksek tepeler
+                            if (heightMap[y][x] > 0.75) {
+                                // Çok düşük şans - sadece gerçek tepeler
+                                if (Math.random() < 0.4) {
+                                    this.map[y][x] = 2;
+                                }
+                            }
+                            // Yüksek yerler için çok düşük şans
+                            else if (heightMap[y][x] > 0.65 && Math.random() < 0.1) {
+                                this.map[y][x] = 2;
+                            }
+                        }
+                    }
+                }
+                
+                // Dağları agresif temizle
+                this.cleanupMountains();
+                this.cleanupMountains(); // İki kez temizle
+            }
+
+            // İzole dağ piksellerini temizle - daha agresif
+            cleanupMountains() {
+                const toRemove = [];
+                
+                for (let y = 1; y < this.height - 1; y++) {
+                    for (let x = 1; x < this.width - 1; x++) {
+                        if (this.map[y][x] === 2) {
+                            // Etrafındaki dağları say
+                            let mountainNeighbors = 0;
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    if (dx === 0 && dy === 0) continue;
+                                    if (this.map[y + dy][x + dx] === 2) {
+                                        mountainNeighbors++;
+                                    }
+                                }
+                            }
+                            
+                            // Çok daha agresif temizlik - daha fazla komşu gerekli
+                            if (mountainNeighbors < 4) {
+                                toRemove.push([x, y]);
+                            }
+                        }
+                    }
+                }
+                
+                // İzole dağları kaldır
+                for (const [x, y] of toRemove) {
+                    this.map[y][x] = 1;
+                }
+            }
+
+            // Gerçekçi ormanlar
+            generateRealisticForests(heightMap) {
+                const numForestSeeds = Math.floor(Math.random() * 6) + 4;
+                
+                for (let i = 0; i < numForestSeeds; i++) {
+                    // Orta rakımda orman merkezi bul
+                    let bestX, bestY;
+                    
+                    for (let attempt = 0; attempt < 30; attempt++) {
+                        const x = Math.floor(Math.random() * this.width);
+                        const y = Math.floor(Math.random() * this.height);
+                        
+                        const height = heightMap[y][x];
+                        // Orta rakım, su değil, dağ değil
+                        if (height > 0.1 && height < 0.4 && this.map[y][x] === 1) {
+                            bestX = x;
+                            bestY = y;
+                            break;
+                        }
+                    }
+                    
+                    if (bestX !== undefined) {
+                        this.growForest(bestX, bestY, heightMap);
+                    }
+                }
+            }
+
+            growForest(startX, startY, heightMap) {
+                const forestSize = Math.floor(Math.random() * 30) + 15;
+                const baseHeight = heightMap[startY][startX];
+                let grown = 0;
+                
+                const queue = [[startX, startY]];
+                const visited = new Set();
+                
+                while (queue.length > 0 && grown < forestSize) {
+                    const [x, y] = queue.shift();
+                    const key = `${x},${y}`;
+                    
+                    if (visited.has(key) || !this.isValidPosition(x, y)) continue;
+                    if (this.map[y][x] !== 1) continue;
+                    
+                    visited.add(key);
+                    
+                    // Yükseklik farkı kontrolü
+                    const heightDiff = Math.abs(heightMap[y][x] - baseHeight);
+                    if (heightDiff > 0.15) continue;
+                    
+                    this.map[y][x] = 5;
+                    grown++;
+                    
+                    // Komşuları ekle
+                    const neighbors = [
+                        [x-1, y], [x+1, y], [x, y-1], [x, y+1]
+                    ];
+                    
+                    for (const [nx, ny] of neighbors) {
+                        if (Math.random() < 0.7) { // %70 yayılma şansı
+                            queue.push([nx, ny]);
+                        }
+                    }
+                }
+            }
+
+            // Orman alanları oluştur
+            generateForests() {
+                const numForests = Math.floor(Math.random() * 4) + 2; // Daha az orman
+                
+                for (let i = 0; i < numForests; i++) {
+                    const centerX = Math.floor(Math.random() * (this.width - 8)) + 4;
+                    const centerY = Math.floor(Math.random() * (this.height - 8)) + 4;
+                    const size = Math.floor(Math.random() * 25) + 20;
+                    
+                    if (this.map[centerY] && this.map[centerY][centerX] === 1) {
+                        this.generateCircularForest(centerX, centerY, size);
+                    }
+                }
+            }
+
+            // Dairesel orman alanı oluştur
+            generateCircularForest(centerX, centerY, maxSize) {
+                const radius = Math.sqrt(maxSize / Math.PI) + Math.random() * 2;
+                let filled = 0;
+                
+                for (let x = centerX - Math.ceil(radius); x <= centerX + Math.ceil(radius) && filled < maxSize; x++) {
+                    for (let y = centerY - Math.ceil(radius); y <= centerY + Math.ceil(radius) && filled < maxSize; y++) {
+                        if (!this.isValidPosition(x, y) || this.map[y][x] !== 1) continue;
+                        
+                        const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
+                        
+                        // Daha doğal kenarlar için rastgele faktör
+                        const randomFactor = 0.7 + Math.random() * 0.6;
+                        
+                        if (distance <= radius * randomFactor) {
+                            // Merkeze yakın alanlar daha yoğun
+                            const probability = Math.max(0.3, 1 - (distance / radius));
+                            
+                            if (Math.random() < probability) {
+                                this.map[y][x] = 5;
+                                filled++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Dağ silsileleri oluştur
+            generateMountains() {
+                const numMountainRanges = Math.floor(Math.random() * 4) + 2;
+                
+                for (let i = 0; i < numMountainRanges; i++) {
+                    const startX = Math.floor(Math.random() * this.width);
+                    const startY = Math.floor(Math.random() * this.height);
+                    const length = Math.floor(Math.random() * 20) + 10;
+                    
+                    this.generateMountainRange(startX, startY, length);
+                }
+            }
+
+            generateMountainRange(startX, startY, length) {
+                let currentX = startX;
+                let currentY = startY;
+                
+                for (let i = 0; i < length; i++) {
+                    if (this.isValidPosition(currentX, currentY) && this.map[currentY][currentX] === 1) {
+                        this.map[currentY][currentX] = 2;
+                        
+                        // Dağ etrafında daha fazla dağ oluştur
+                        for (let dx = -1; dx <= 1; dx++) {
+                            for (let dy = -1; dy <= 1; dy++) {
+                                const nx = currentX + dx;
+                                const ny = currentY + dy;
+                                if (this.isValidPosition(nx, ny) && this.map[ny][nx] === 1 && Math.random() < 0.4) {
+                                    this.map[ny][nx] = 2;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Yön değiştir
+                    currentX += Math.floor(Math.random() * 3) - 1;
+                    currentY += Math.floor(Math.random() * 3) - 1;
+                    
+                    currentX = Math.max(0, Math.min(this.width - 1, currentX));
+                    currentY = Math.max(0, Math.min(this.height - 1, currentY));
+                }
+            }
+
+            // Flood fill algoritması
+            floodFill(startX, startY, newType, maxSize) {
+                if (newType === 5) {
+                    // Ormanlar için özel algoritma kullan
+                    this.generateCircularForest(startX, startY, maxSize);
+                    return;
+                }
+                
+                const stack = [[startX, startY]];
+                const visited = new Set();
+                let filled = 0;
+                
+                while (stack.length > 0 && filled < maxSize) {
+                    const [x, y] = stack.pop();
+                    const key = `${x},${y}`;
+                    
+                    if (visited.has(key) || !this.isValidPosition(x, y)) continue;
+                    
+                    // Su için özel kontrol
+                    if ((newType === 3 || newType === 4) && (this.map[y][x] === 3 || this.map[y][x] === 4)) {
+                        visited.add(key);
+                        continue;
+                    }
+                    
+                    if (this.map[y][x] !== 1 && this.map[y][x] !== newType) {
+                        visited.add(key);
+                        continue;
+                    }
+                    
+                    visited.add(key);
+                    this.map[y][x] = newType;
+                    filled++;
+                    
+                    // Komşu hücreleri ekle
+                    const neighbors = [
+                        [x-1, y], [x+1, y], [x, y-1], [x, y+1],
+                        [x-1, y-1], [x+1, y-1], [x-1, y+1], [x+1, y+1]
+                    ];
+                    
+                    for (const [nx, ny] of neighbors) {
+                        if (Math.random() < 0.7) { // Rastgelelik ekle
+                            stack.push([nx, ny]);
+                        }
+                    }
+                }
+            }
+
+            isValidPosition(x, y) {
+                return x >= 0 && x < this.width && y >= 0 && y < this.height;
+            }
+
+            generate() {
+                this.initializeMap();
+                
+                // 1. Yükseklik haritası oluştur
+                const heightMap = this.generateHeightMap();
+                
+                // 2. Su kütlelerini yerleştir (yükseklik bazlı)
+                this.generateRealisticWater(heightMap);
+                
+                // 3. Dağları yerleştir (yüksek rakım)
+                this.generateRealisticMountains(heightMap);
+                
+                // 4. Ormanları yerleştir (orta rakım, su olmayan)
+                this.generateRealisticForests(heightMap);
+                
+                return {
+                    width: this.width,
+                    height: this.height,
+                    map: this.map
+                };
+            }
+
+            generateCSharpSeedData() {
+                let csharpCode = "var random = new Random();\n";
+                
+                for (let x = 0; x < this.width; x++) {
+                    for (let y = 0; y < this.height; y++) {
+                        const surfaceId = this.map[y][x];
+                        csharpCode += `modelBuilder.Entity<Map>().HasData(\n`;
+                        csharpCode += `    new Map\n`;
+                        csharpCode += `    {\n`;
+                        csharpCode += `        X = ${x},\n`;
+                        csharpCode += `        Y = ${y},\n`;
+                        csharpCode += `        SurfaceId = ${surfaceId},\n`;
+                        csharpCode += `        SpecialName = "",\n`;
+                        csharpCode += `        OwnerId = Guid.Empty\n`;
+                        csharpCode += `    }\n`;
+                        csharpCode += `);\n`;
+                    }
+                }
+                
+                return csharpCode;
+            }
+
+            visualize() {
+                this.canvas = document.createElement('canvas');
+                this.cellSize = Math.max(3, Math.min(12, 600 / Math.max(this.width, this.height)));
+                
+                this.canvas.width = this.width * this.cellSize;
+                this.canvas.height = this.height * this.cellSize;
+                this.canvas.className = 'map-visual';
+                
+                this.ctx = this.canvas.getContext('2d');
+                this.redrawCanvas();
+                this.setupCanvasEvents();
+                
+                return this.canvas;
+            }
+
+            redrawCanvas() {
+                if (!this.ctx) return;
+                
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        this.ctx.fillStyle = this.colors[this.map[y][x]];
+                        this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+                        
+                        // Izgara çizgileri
+                        if (this.cellSize >= 6) {
+                            this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                            this.ctx.lineWidth = 0.5;
+                            this.ctx.strokeRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+                        }
+                    }
+                }
+            }
+
+            setupCanvasEvents() {
+                if (!this.canvas) return;
+                
+                this.canvas.addEventListener('mousedown', (e) => {
+                    if (!this.isEditMode) return;
+                    this.isDrawing = true;
+                    this.drawOnCanvas(e);
+                });
+
+                this.canvas.addEventListener('mousemove', (e) => {
+                    if (!this.isEditMode || !this.isDrawing) return;
+                    this.drawOnCanvas(e);
+                });
+
+                this.canvas.addEventListener('mouseup', () => {
+                    this.isDrawing = false;
+                });
+
+                this.canvas.addEventListener('mouseleave', () => {
+                    this.isDrawing = false;
+                });
+
+                // Dokunmatik destek
+                this.canvas.addEventListener('touchstart', (e) => {
+                    if (!this.isEditMode) return;
+                    e.preventDefault();
+                    this.isDrawing = true;
+                    const touch = e.touches[0];
+                    const mouseEvent = new MouseEvent('mousedown', {
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    });
+                    this.drawOnCanvas(mouseEvent);
+                });
+
+                this.canvas.addEventListener('touchmove', (e) => {
+                    if (!this.isEditMode || !this.isDrawing) return;
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const mouseEvent = new MouseEvent('mousemove', {
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    });
+                    this.drawOnCanvas(mouseEvent);
+                });
+
+                this.canvas.addEventListener('touchend', () => {
+                    this.isDrawing = false;
+                });
+            }
+
+            drawOnCanvas(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = Math.floor((e.clientX - rect.left) / this.cellSize);
+                const y = Math.floor((e.clientY - rect.top) / this.cellSize);
+                
+                this.paintArea(x, y, this.currentBrush, this.brushSize);
+                this.redrawCanvas();
+                // Kod üretimini kaldır - sadece buton tıklandığında olacak
+            }
+
+            paintArea(centerX, centerY, surfaceType, brushSize) {
+                const radius = Math.floor(brushSize / 2);
+                
+                for (let dx = -radius; dx <= radius; dx++) {
+                    for (let dy = -radius; dy <= radius; dy++) {
+                        const x = centerX + dx;
+                        const y = centerY + dy;
+                        
+                        if (this.isValidPosition(x, y)) {
+                            // Dairesel fırça
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            if (distance <= radius) {
+                                this.map[y][x] = surfaceType;
+                            }
+                        }
+                    }
+                }
+            }
+
+            setEditMode(enabled) {
+                this.isEditMode = enabled;
+                if (this.canvas) {
+                    this.canvas.classList.toggle('editing', enabled);
+                }
+            }
+
+            setBrush(surfaceType) {
+                this.currentBrush = surfaceType;
+            }
+
+            setBrushSize(size) {
+                this.brushSize = parseInt(size);
+            }
+
+            clearMap() {
+                this.initializeMap();
+                this.redrawCanvas();
+                // Kod üretimini kaldır
+            }
+
+            updateCodeOutput() {
+                // Manuel kod güncelleme fonksiyonu - buton tıklandığında çağrılacak
+                const csharpOutput = document.querySelector('.json-output');
+                if (csharpOutput) {
+                    csharpOutput.textContent = this.generateCSharpSeedData();
+                }
+                
+                // JSON output'u da güncelle
+                const jsonOutputs = document.querySelectorAll('.json-output');
+                if (jsonOutputs.length > 1) {
+                    const mapData = {
+                        width: this.width,
+                        height: this.height,
+                        map: this.map
+                    };
+                    jsonOutputs[1].textContent = JSON.stringify(mapData, null, 2);
+                }
+            }
+        }
+
+        let currentGenerator = null;
+
+        // Update code output function
+        function updateCode() {
+            if (!currentGenerator) {
+                alert('Please generate a map first!');
+                return;
+            }
+            
+            currentGenerator.updateCodeOutput();
+            alert('Code updated successfully!');
+        }
+
+        function generateMap() {
+            const loading = document.getElementById('loading');
+            const mapContainer = document.getElementById('mapContainer');
+            
+            loading.classList.add('show');
+            mapContainer.innerHTML = '';
+            
+            setTimeout(() => {
+                const width = parseInt(document.getElementById('width').value);
+                const height = parseInt(document.getElementById('height').value);
+                
+                if (width < 10 || width > 200 || height < 10 || height > 200) {
+                    alert('Please enter values between 10-200.');
+                    loading.classList.remove('show');
+                    return;
+                }
+                
+                currentGenerator = new MapGenerator(width, height);
+                const mapData = currentGenerator.generate();
+                
+                // Visual map
+                const canvas = currentGenerator.visualize();
+                
+                // Code section container
+                const codeSection = document.createElement('div');
+                codeSection.className = 'code-section';
+                
+                // C# Entity Framework Seed Data
+                const csharpTitle = document.createElement('h3');
+                csharpTitle.textContent = 'C# Entity Framework Seed Data:';
+                csharpTitle.style.color = '#333';
+                csharpTitle.style.marginTop = '20px';
+                csharpTitle.style.marginBottom = '10px';
+                csharpTitle.style.textAlign = 'center';
+                
+                const csharpOutput = document.createElement('pre');
+                csharpOutput.className = 'json-output';
+                csharpOutput.style.fontSize = '10px';
+                csharpOutput.style.lineHeight = '1.2';
+                csharpOutput.textContent = currentGenerator.generateCSharpSeedData();
+                
+                // JSON format (Optional)
+                const jsonTitle = document.createElement('h3');
+                jsonTitle.textContent = 'JSON Format (Optional):';
+                jsonTitle.style.color = '#333';
+                jsonTitle.style.marginTop = '20px';
+                jsonTitle.style.marginBottom = '10px';
+                jsonTitle.style.textAlign = 'center';
+                
+                const jsonOutput = document.createElement('pre');
+                jsonOutput.className = 'json-output';
+                jsonOutput.textContent = JSON.stringify(mapData, null, 2);
+                
+                // Add everything to containers
+                codeSection.appendChild(csharpTitle);
+                codeSection.appendChild(csharpOutput);
+                codeSection.appendChild(jsonTitle);
+                codeSection.appendChild(jsonOutput);
+                
+                mapContainer.appendChild(canvas);
+                mapContainer.appendChild(codeSection);
+                
+                loading.classList.remove('show');
+            }, 500);
+        }
+
+        function toggleEditMode() {
+            const editControls = document.getElementById('editControls');
+            const editModeBtn = document.getElementById('editModeBtn');
+            
+            if (!currentGenerator) {
+                alert('Please generate a map first!');
+                return;
+            }
+            
+            const isEditMode = editControls.style.display === 'none';
+            editControls.style.display = isEditMode ? 'block' : 'none';
+            editModeBtn.textContent = isEditMode ? '🔒 Close Editor' : '🖌️ Editor Mode';
+            editModeBtn.style.background = isEditMode ? 
+                'linear-gradient(135deg, #ff6b6b, #ee5a5a)' : 
+                'linear-gradient(135deg, #667eea, #764ba2)';
+            
+            currentGenerator.setEditMode(isEditMode);
+        }
+
+        function clearMap() {
+            if (!currentGenerator) {
+                alert('Please generate a map first!');
+                return;
+            }
+            
+            if (confirm('Are you sure you want to clear the entire map?')) {
+                currentGenerator.clearMap();
+            }
+        }
+
+        // Fırça seçimi
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.brush-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.brush-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    if (currentGenerator) {
+                        currentGenerator.setBrush(parseInt(item.dataset.surface));
+                    }
+                });
+            });
+
+            // Fırça boyutu
+            const brushSize = document.getElementById('brushSize');
+            const brushSizeValue = document.getElementById('brushSizeValue');
+            
+            brushSize.addEventListener('input', () => {
+                brushSizeValue.textContent = brushSize.value;
+                if (currentGenerator) {
+                    currentGenerator.setBrushSize(brushSize.value);
+                }
+            });
+        });
+
+        // Page load - automatically generate map
+        window.onload = () => generateMap();
+
+        function copyToClipboard() {
+            const csharpOutput = document.querySelector('.json-output');
+            if (csharpOutput) {
+                navigator.clipboard.writeText(csharpOutput.textContent).then(() => {
+                    alert('C# seed data copied to clipboard!');
+                }).catch(() => {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = csharpOutput.textContent;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('C# seed data copied to clipboard!');
+                });
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (!currentGenerator || !currentGenerator.isEditMode) return;
+            
+            const key = e.key;
+            if (key >= '1' && key <= '5') {
+                const surface = parseInt(key);
+                currentGenerator.setBrush(surface);
+                
+                // Update active brush in UI
+                document.querySelectorAll('.brush-item').forEach(item => {
+                    item.classList.toggle('active', parseInt(item.dataset.surface) === surface);
+                });
+                e.preventDefault();
+            }
+            
+            // Brush size
+            if (e.key === '+' || e.key === '=') {
+                const brushSize = document.getElementById('brushSize');
+                if (parseInt(brushSize.value) < 5) {
+                    brushSize.value = parseInt(brushSize.value) + 1;
+                    document.getElementById('brushSizeValue').textContent = brushSize.value;
+                    currentGenerator.setBrushSize(brushSize.value);
+                }
+                e.preventDefault();
+            }
+            
+            if (e.key === '-') {
+                const brushSize = document.getElementById('brushSize');
+                if (parseInt(brushSize.value) > 1) {
+                    brushSize.value = parseInt(brushSize.value) - 1;
+                    document.getElementById('brushSizeValue').textContent = brushSize.value;
+                    currentGenerator.setBrushSize(brushSize.value);
+                }
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

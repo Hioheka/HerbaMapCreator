@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Herba Map Creator v.0.0.1</title>
+    <title>Herba Map Creator v.0.0.2</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -237,7 +237,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🗺️ Herba Map Creator v.0.0.1</h1>
+        <h1>🗺️ Herba Map Creator v.0.0.2</h1>
         
         <div class="controls">
             <div class="input-group">
@@ -310,15 +310,16 @@
     </div>
 
     <script>
-		function updateCode() {
-						if (!currentGenerator) {
-							alert('Please generate a map first!');
-							return;
-						}
-						
-						currentGenerator.updateCodeOutput();
-						alert('Code updated successfully!');
-					}
+        function updateCode() {
+            if (!currentGenerator) {
+                alert('Please generate a map first!');
+                return;
+            }
+            
+            currentGenerator.updateCodeOutput();
+            alert('Code updated successfully!');
+        }
+
         class MapGenerator {
             constructor(width, height) {
                 this.width = width;
@@ -342,19 +343,24 @@
             }
 
             initializeMap() {
+                // Start with all deep water
                 this.map = Array(this.height).fill(null).map(() => 
-                    Array(this.width).fill(1)
+                    Array(this.width).fill(4)
                 );
             }
 
-            // Perlin noise benzeri fonksiyon
+            // Improved noise function for better terrain
             noise(x, y, frequency = 0.1) {
-                return (Math.sin(x * frequency) + Math.sin(y * frequency) + 
-                        Math.sin((x + y) * frequency * 0.5)) / 3;
+                const xi = Math.floor(x * frequency);
+                const yi = Math.floor(y * frequency);
+                
+                // Simple hash-based noise
+                const hash = (xi * 374761393 + yi * 668265263) % 1000000;
+                return (hash / 1000000.0) * 2 - 1;
             }
 
-            // Gelişmiş noise fonksiyonu
-            improvedNoise(x, y, octaves = 4, persistence = 0.5, scale = 0.1) {
+            // Multi-octave noise
+            multiNoise(x, y, octaves = 4, persistence = 0.5, scale = 0.02) {
                 let value = 0;
                 let amplitude = 1;
                 let frequency = scale;
@@ -370,162 +376,141 @@
                 return value / maxValue;
             }
 
-            // Yükseklik haritası oluştur
-            generateHeightMap() {
-                const heightMap = Array(this.height).fill(null).map(() => Array(this.width).fill(0));
+            // Generate islands using noise
+            generateIslands() {
+                const numIslands = Math.floor(Math.random() * 4) + 2; // 2-5 islands
                 
-                for (let y = 0; y < this.height; y++) {
-                    for (let x = 0; x < this.width; x++) {
-                        // Ana arazi formu - çok daha yumuşak
-                        let height = this.improvedNoise(x, y, 3, 0.4, 0.02);
-                        
-                        // Dağ tepeleri - çok seyrek ve küçük
-                        const mountainNoise = this.improvedNoise(x, y, 2, 0.8, 0.015);
-                        if (mountainNoise > 0.6) {
-                            height += mountainNoise * 0.3; // Çok daha az etki
-                        }
-                        
-                        // Kenar efekti - kıyıya doğru alçalma
-                        const edgeDistance = Math.min(x, y, this.width - x - 1, this.height - y - 1);
-                        const edgeFactor = Math.min(1, edgeDistance / 12);
-                        height *= edgeFactor;
-                        
-                        heightMap[y][x] = height;
-                    }
-                }
-                
-                return heightMap;
-            }
-
-            // Gerçekçi su kütleleri oluştur
-            generateRealisticWater(heightMap) {
-                // Deniz seviyesi belirle
-                const seaLevel = -0.15;
-                
-                // Denizleri oluştur
-                for (let y = 0; y < this.height; y++) {
-                    for (let x = 0; x < this.width; x++) {
-                        if (heightMap[y][x] < seaLevel) {
-                            this.map[y][x] = 4; // Derin su
-                        }
-                    }
-                }
-                
-                // Sığ su alanları - derin suyun kenarları
-                for (let y = 0; y < this.height; y++) {
-                    for (let x = 0; x < this.width; x++) {
-                        if (this.map[y][x] === 1 && heightMap[y][x] < seaLevel + 0.1) {
-                            // Yakında derin su var mı kontrol et
-                            let nearDeepWater = false;
-                            for (let dy = -2; dy <= 2; dy++) {
-                                for (let dx = -2; dx <= 2; dx++) {
-                                    const nx = x + dx;
-                                    const ny = y + dy;
-                                    if (this.isValidPosition(nx, ny) && this.map[ny][nx] === 4) {
-                                        nearDeepWater = true;
-                                        break;
-                                    }
-                                }
-                                if (nearDeepWater) break;
-                            }
-                            
-                            if (nearDeepWater) {
-                                this.map[y][x] = 3; // Sığ su
-                            }
-                        }
-                    }
-                }
-                
-                // İç göller
-                this.generateInlandLakes(heightMap);
-                
-                // Nehirler
-                this.generateRealisticRivers(heightMap);
-            }
-
-            // İç göller oluştur
-            generateInlandLakes(heightMap) {
-                const numLakes = Math.floor(Math.random() * 3) + 2;
-                
-                for (let i = 0; i < numLakes; i++) {
-                    // Düşük rakımda göl merkezi bul
-                    let bestX = 0, bestY = 0, minHeight = Infinity;
+                for (let island = 0; island < numIslands; island++) {
+                    // Random island center
+                    const centerX = Math.floor(Math.random() * (this.width - 40)) + 20;
+                    const centerY = Math.floor(Math.random() * (this.height - 40)) + 20;
                     
-                    for (let attempt = 0; attempt < 50; attempt++) {
-                        const x = Math.floor(Math.random() * (this.width - 10)) + 5;
-                        const y = Math.floor(Math.random() * (this.height - 10)) + 5;
-                        
-                        if (heightMap[y][x] < minHeight && this.map[y][x] === 1) {
-                            minHeight = heightMap[y][x];
-                            bestX = x;
-                            bestY = y;
-                        }
-                    }
+                    // Island size
+                    const maxRadius = Math.floor(Math.random() * 25) + 15;
                     
-                    // Göl oluştur
-                    const lakeSize = Math.floor(Math.random() * 20) + 10;
-                    this.createLake(bestX, bestY, lakeSize, heightMap);
+                    this.createIsland(centerX, centerY, maxRadius);
                 }
             }
 
-            createLake(centerX, centerY, size, heightMap) {
-                const baseHeight = heightMap[centerY][centerX];
-                const lakeDepth = 0.05;
-                
-                for (let y = centerY - size; y <= centerY + size; y++) {
-                    for (let x = centerX - size; x <= centerX + size; x++) {
+            createIsland(centerX, centerY, maxRadius) {
+                // Create island using noise-based height map
+                for (let y = centerY - maxRadius; y <= centerY + maxRadius; y++) {
+                    for (let x = centerX - maxRadius; x <= centerX + maxRadius; x++) {
                         if (!this.isValidPosition(x, y)) continue;
                         
-                        const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-                        const normalizedDist = distance / size;
+                        const distanceFromCenter = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
                         
-                        if (normalizedDist <= 1 && heightMap[y][x] <= baseHeight + lakeDepth) {
-                            // Merkeze yakın derin su
-                            if (normalizedDist <= 0.4) {
-                                this.map[y][x] = 4;
-                            }
-                            // Kenarlarda sığ su
-                            else if (normalizedDist <= 0.8) {
-                                this.map[y][x] = 3;
+                        if (distanceFromCenter <= maxRadius) {
+                            // Use noise to create irregular coastline
+                            const noiseValue = this.multiNoise(x, y, 6, 0.6, 0.05);
+                            const heightFromDistance = 1 - (distanceFromCenter / maxRadius);
+                            
+                            // Combine distance falloff with noise for natural coastlines
+                            const finalHeight = heightFromDistance + noiseValue * 0.3;
+                            
+                            if (finalHeight > 0.2) {
+                                // Create elevation zones
+                                if (finalHeight > 0.8) {
+                                    this.map[y][x] = 2; // Mountains at peaks
+                                } else if (finalHeight > 0.6) {
+                                    this.map[y][x] = Math.random() < 0.7 ? 1 : 5; // Mix of plains and forest
+                                } else if (finalHeight > 0.4) {
+                                    this.map[y][x] = 1; // Plains
+                                } else {
+                                    this.map[y][x] = 3; // Shallow water near coast
+                                }
                             }
                         }
                     }
                 }
             }
 
-            // Gerçekçi nehirler
-            generateRealisticRivers(heightMap) {
-                const numRivers = Math.floor(Math.random() * 3) + 2;
+            // Generate inland lakes on islands
+            generateLakes() {
+                const numLakes = Math.floor(Math.random() * 3) + 1;
+                
+                for (let i = 0; i < numLakes; i++) {
+                    // Find a suitable location on land
+                    let attempts = 0;
+                    let lakeX, lakeY;
+                    
+                    do {
+                        lakeX = Math.floor(Math.random() * this.width);
+                        lakeY = Math.floor(Math.random() * this.height);
+                        attempts++;
+                    } while (attempts < 50 && (this.map[lakeY][lakeX] === 3 || this.map[lakeY][lakeX] === 4));
+                    
+                    if (attempts < 50) {
+                        this.createLake(lakeX, lakeY);
+                    }
+                }
+            }
+
+            createLake(centerX, centerY) {
+                const lakeSize = Math.floor(Math.random() * 8) + 3;
+                
+                // Use flood fill with size limit
+                const queue = [[centerX, centerY]];
+                const visited = new Set();
+                let filled = 0;
+                
+                while (queue.length > 0 && filled < lakeSize) {
+                    const [x, y] = queue.shift();
+                    const key = `${x},${y}`;
+                    
+                    if (visited.has(key) || !this.isValidPosition(x, y)) continue;
+                    if (this.map[y][x] === 3 || this.map[y][x] === 4) continue; // Don't create lakes in existing water
+                    
+                    visited.add(key);
+                    
+                    // Create deep water in center, shallow water on edges
+                    if (filled < lakeSize * 0.4) {
+                        this.map[y][x] = 4; // Deep water
+                    } else {
+                        this.map[y][x] = 3; // Shallow water
+                    }
+                    
+                    filled++;
+                    
+                    // Add neighbors with some randomness
+                    const neighbors = [
+                        [x-1, y], [x+1, y], [x, y-1], [x, y+1]
+                    ];
+                    
+                    for (const [nx, ny] of neighbors) {
+                        if (Math.random() < 0.6) { // 60% chance to spread
+                            queue.push([nx, ny]);
+                        }
+                    }
+                }
+            }
+
+            // Generate rivers flowing from mountains to sea
+            generateRivers() {
+                const numRivers = Math.floor(Math.random() * 4) + 2;
                 
                 for (let i = 0; i < numRivers; i++) {
-                    // Yüksek yerden başla
-                    let startX, startY, maxHeight = -Infinity;
+                    // Find a mountain start point
+                    let startX, startY;
+                    let attempts = 0;
                     
-                    for (let attempt = 0; attempt < 30; attempt++) {
-                        const x = Math.floor(Math.random() * this.width);
-                        const y = Math.floor(Math.random() * this.height);
-                        
-                        if (heightMap[y][x] > maxHeight && this.map[y][x] === 1) {
-                            maxHeight = heightMap[y][x];
-                            startX = x;
-                            startY = y;
-                        }
+                    do {
+                        startX = Math.floor(Math.random() * this.width);
+                        startY = Math.floor(Math.random() * this.height);
+                        attempts++;
+                    } while (attempts < 30 && this.map[startY][startX] !== 2);
+                    
+                    if (attempts < 30) {
+                        this.traceRiver(startX, startY);
                     }
-                    
-                    this.traceMeanderingRiver(startX, startY, heightMap);
                 }
             }
 
-            traceMeanderingRiver(startX, startY, heightMap) {
+            traceRiver(startX, startY) {
                 let currentX = startX;
                 let currentY = startY;
-                const maxLength = 80;
+                const maxLength = 50;
                 const visited = new Set();
-                
-                // Menderesler için yön ve momentum
-                let currentDirection = Math.random() * Math.PI * 2; // Rastgele başlangıç yönü
-                let momentum = 0.7; // Yön değiştirme direnci
-                let meanderStrength = 0.3; // Menderes yapma gücü
                 
                 for (let step = 0; step < maxLength; step++) {
                     const key = `${currentX},${currentY}`;
@@ -533,362 +518,157 @@
                     
                     visited.add(key);
                     
-                    // Su buldu mu?
+                    // Stop if we reach existing water
                     if (this.map[currentY][currentX] === 3 || this.map[currentY][currentX] === 4) {
                         break;
                     }
                     
-                    this.map[currentY][currentX] = 3;
-                    
-                    // En düşük komşuya doğru ana yön
-                    let bestDirection = this.findDownhillDirection(currentX, currentY, heightMap);
-                    
-                    // Mevcut yön ile en düşük yön arasında menderes yap
-                    if (bestDirection !== null) {
-                        // Yön farkını hesapla
-                        let angleDiff = bestDirection - currentDirection;
-                        
-                        // Açıyı normalize et (-π, π arası)
-                        while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-                        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-                        
-                        // Momentum ile yön güncelle - ani değişiklikler yerine kademeli
-                        currentDirection += angleDiff * (1 - momentum);
-                        
-                        // Menderes ekle - rastgele sapma
-                        const meanderAngle = (Math.random() - 0.5) * meanderStrength;
-                        currentDirection += meanderAngle;
-                        
-                        // Momentum zamanla azalsın (nehir aşağı doğru inerken daha kararlı)
-                        momentum = Math.max(0.3, momentum - 0.01);
+                    // Create shallow water for river
+                    if (this.map[currentY][currentX] === 1 || this.map[currentY][currentX] === 5) {
+                        this.map[currentY][currentX] = 3;
                     }
                     
-                    // Yeni pozisyonu hesapla
-                    const stepSize = 1;
-                    const nextX = Math.round(currentX + Math.cos(currentDirection) * stepSize);
-                    const nextY = Math.round(currentY + Math.sin(currentDirection) * stepSize);
+                    // Find direction towards nearest water or edge
+                    let bestDirection = this.findBestRiverDirection(currentX, currentY);
                     
-                    // Sınırları kontrol et
-                    if (!this.isValidPosition(nextX, nextY)) {
-                        // Sınıra çarpırsa yönü değiştir
-                        currentDirection += Math.PI / 4; // 45 derece döndür
-                        continue;
+                    if (bestDirection) {
+                        currentX += bestDirection.dx;
+                        currentY += bestDirection.dy;
+                    } else {
+                        // Random direction if no clear path
+                        const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+                        const randomDir = directions[Math.floor(Math.random() * directions.length)];
+                        currentX += randomDir[0];
+                        currentY += randomDir[1];
                     }
                     
-                    // Çok yüksek yere çıkıyorsa menderes yap
-                    if (heightMap[nextY][nextX] > heightMap[currentY][currentX] + 0.1) {
-                        currentDirection += (Math.random() - 0.5) * Math.PI / 2; // 90 derece kadar sapma
-                        continue;
+                    // Add some randomness to river path
+                    if (Math.random() < 0.3) {
+                        currentX += Math.random() < 0.5 ? -1 : 1;
                     }
-                    
-                    currentX = nextX;
-                    currentY = nextY;
-                    
-                    // Nehir genişletme - bazen yan kareleri de su yap
-                    if (step > 10 && Math.random() < 0.2) {
-                        this.widenRiver(currentX, currentY, 1);
+                    if (Math.random() < 0.3) {
+                        currentY += Math.random() < 0.5 ? -1 : 1;
                     }
-                }
-            }
-
-            // Aşağı doğru en uygun yönü bul
-            findDownhillDirection(x, y, heightMap) {
-                const currentHeight = heightMap[y][x];
-                let bestDirection = null;
-                let maxDrop = 0;
-                
-                // 8 yönü kontrol et
-                const directions = [
-                    [0, -1, 0],           // Kuzey
-                    [1, -1, Math.PI/4],   // Kuzeydoğu
-                    [1, 0, Math.PI/2],    // Doğu
-                    [1, 1, 3*Math.PI/4],  // Güneydoğu
-                    [0, 1, Math.PI],      // Güney
-                    [-1, 1, 5*Math.PI/4], // Güneybatı
-                    [-1, 0, 3*Math.PI/2], // Batı
-                    [-1, -1, 7*Math.PI/4] // Kuzeybatı
-                ];
-                
-                for (const [dx, dy, angle] of directions) {
-                    const nx = x + dx;
-                    const ny = y + dy;
-                    
-                    if (this.isValidPosition(nx, ny)) {
-                        const heightDrop = currentHeight - heightMap[ny][nx];
-                        if (heightDrop > maxDrop) {
-                            maxDrop = heightDrop;
-                            bestDirection = angle;
-                        }
-                    }
-                }
-                
-                return bestDirection;
-            }
-
-            // Nehir genişletme
-            widenRiver(centerX, centerY, radius) {
-                for (let dx = -radius; dx <= radius; dx++) {
-                    for (let dy = -radius; dy <= radius; dy++) {
-                        const nx = centerX + dx;
-                        const ny = centerY + dy;
-                        
-                        if (this.isValidPosition(nx, ny) && this.map[ny][nx] === 1) {
-                            const distance = Math.sqrt(dx * dx + dy * dy);
-                            if (distance <= radius && Math.random() < 0.7) {
-                                this.map[ny][nx] = 3;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Gerçekçi dağlar - çok daha az dağ
-            generateRealisticMountains(heightMap) {
-                for (let y = 0; y < this.height; y++) {
-                    for (let x = 0; x < this.width; x++) {
-                        if (this.map[y][x] === 1) { // Sadece kara parçalarında
-                            // ÇOK daha yüksek eşik - sadece en yüksek tepeler
-                            if (heightMap[y][x] > 0.75) {
-                                // Çok düşük şans - sadece gerçek tepeler
-                                if (Math.random() < 0.4) {
-                                    this.map[y][x] = 2;
-                                }
-                            }
-                            // Yüksek yerler için çok düşük şans
-                            else if (heightMap[y][x] > 0.65 && Math.random() < 0.1) {
-                                this.map[y][x] = 2;
-                            }
-                        }
-                    }
-                }
-                
-                // Dağları agresif temizle
-                this.cleanupMountains();
-                this.cleanupMountains(); // İki kez temizle
-            }
-
-            // İzole dağ piksellerini temizle - daha agresif
-            cleanupMountains() {
-                const toRemove = [];
-                
-                for (let y = 1; y < this.height - 1; y++) {
-                    for (let x = 1; x < this.width - 1; x++) {
-                        if (this.map[y][x] === 2) {
-                            // Etrafındaki dağları say
-                            let mountainNeighbors = 0;
-                            for (let dy = -1; dy <= 1; dy++) {
-                                for (let dx = -1; dx <= 1; dx++) {
-                                    if (dx === 0 && dy === 0) continue;
-                                    if (this.map[y + dy][x + dx] === 2) {
-                                        mountainNeighbors++;
-                                    }
-                                }
-                            }
-                            
-                            // Çok daha agresif temizlik - daha fazla komşu gerekli
-                            if (mountainNeighbors < 4) {
-                                toRemove.push([x, y]);
-                            }
-                        }
-                    }
-                }
-                
-                // İzole dağları kaldır
-                for (const [x, y] of toRemove) {
-                    this.map[y][x] = 1;
-                }
-            }
-
-            // Gerçekçi ormanlar
-            generateRealisticForests(heightMap) {
-                const numForestSeeds = Math.floor(Math.random() * 6) + 4;
-                
-                for (let i = 0; i < numForestSeeds; i++) {
-                    // Orta rakımda orman merkezi bul
-                    let bestX, bestY;
-                    
-                    for (let attempt = 0; attempt < 30; attempt++) {
-                        const x = Math.floor(Math.random() * this.width);
-                        const y = Math.floor(Math.random() * this.height);
-                        
-                        const height = heightMap[y][x];
-                        // Orta rakım, su değil, dağ değil
-                        if (height > 0.1 && height < 0.4 && this.map[y][x] === 1) {
-                            bestX = x;
-                            bestY = y;
-                            break;
-                        }
-                    }
-                    
-                    if (bestX !== undefined) {
-                        this.growForest(bestX, bestY, heightMap);
-                    }
-                }
-            }
-
-            growForest(startX, startY, heightMap) {
-                const forestSize = Math.floor(Math.random() * 30) + 15;
-                const baseHeight = heightMap[startY][startX];
-                let grown = 0;
-                
-                const queue = [[startX, startY]];
-                const visited = new Set();
-                
-                while (queue.length > 0 && grown < forestSize) {
-                    const [x, y] = queue.shift();
-                    const key = `${x},${y}`;
-                    
-                    if (visited.has(key) || !this.isValidPosition(x, y)) continue;
-                    if (this.map[y][x] !== 1) continue;
-                    
-                    visited.add(key);
-                    
-                    // Yükseklik farkı kontrolü
-                    const heightDiff = Math.abs(heightMap[y][x] - baseHeight);
-                    if (heightDiff > 0.15) continue;
-                    
-                    this.map[y][x] = 5;
-                    grown++;
-                    
-                    // Komşuları ekle
-                    const neighbors = [
-                        [x-1, y], [x+1, y], [x, y-1], [x, y+1]
-                    ];
-                    
-                    for (const [nx, ny] of neighbors) {
-                        if (Math.random() < 0.7) { // %70 yayılma şansı
-                            queue.push([nx, ny]);
-                        }
-                    }
-                }
-            }
-
-            // Orman alanları oluştur
-            generateForests() {
-                const numForests = Math.floor(Math.random() * 4) + 2; // Daha az orman
-                
-                for (let i = 0; i < numForests; i++) {
-                    const centerX = Math.floor(Math.random() * (this.width - 8)) + 4;
-                    const centerY = Math.floor(Math.random() * (this.height - 8)) + 4;
-                    const size = Math.floor(Math.random() * 25) + 20;
-                    
-                    if (this.map[centerY] && this.map[centerY][centerX] === 1) {
-                        this.generateCircularForest(centerX, centerY, size);
-                    }
-                }
-            }
-
-            // Dairesel orman alanı oluştur
-            generateCircularForest(centerX, centerY, maxSize) {
-                const radius = Math.sqrt(maxSize / Math.PI) + Math.random() * 2;
-                let filled = 0;
-                
-                for (let x = centerX - Math.ceil(radius); x <= centerX + Math.ceil(radius) && filled < maxSize; x++) {
-                    for (let y = centerY - Math.ceil(radius); y <= centerY + Math.ceil(radius) && filled < maxSize; y++) {
-                        if (!this.isValidPosition(x, y) || this.map[y][x] !== 1) continue;
-                        
-                        const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-                        
-                        // Daha doğal kenarlar için rastgele faktör
-                        const randomFactor = 0.7 + Math.random() * 0.6;
-                        
-                        if (distance <= radius * randomFactor) {
-                            // Merkeze yakın alanlar daha yoğun
-                            const probability = Math.max(0.3, 1 - (distance / radius));
-                            
-                            if (Math.random() < probability) {
-                                this.map[y][x] = 5;
-                                filled++;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Dağ silsileleri oluştur
-            generateMountains() {
-                const numMountainRanges = Math.floor(Math.random() * 4) + 2;
-                
-                for (let i = 0; i < numMountainRanges; i++) {
-                    const startX = Math.floor(Math.random() * this.width);
-                    const startY = Math.floor(Math.random() * this.height);
-                    const length = Math.floor(Math.random() * 20) + 10;
-                    
-                    this.generateMountainRange(startX, startY, length);
-                }
-            }
-
-            generateMountainRange(startX, startY, length) {
-                let currentX = startX;
-                let currentY = startY;
-                
-                for (let i = 0; i < length; i++) {
-                    if (this.isValidPosition(currentX, currentY) && this.map[currentY][currentX] === 1) {
-                        this.map[currentY][currentX] = 2;
-                        
-                        // Dağ etrafında daha fazla dağ oluştur
-                        for (let dx = -1; dx <= 1; dx++) {
-                            for (let dy = -1; dy <= 1; dy++) {
-                                const nx = currentX + dx;
-                                const ny = currentY + dy;
-                                if (this.isValidPosition(nx, ny) && this.map[ny][nx] === 1 && Math.random() < 0.4) {
-                                    this.map[ny][nx] = 2;
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Yön değiştir
-                    currentX += Math.floor(Math.random() * 3) - 1;
-                    currentY += Math.floor(Math.random() * 3) - 1;
                     
                     currentX = Math.max(0, Math.min(this.width - 1, currentX));
                     currentY = Math.max(0, Math.min(this.height - 1, currentY));
                 }
             }
 
-            // Flood fill algoritması
-            floodFill(startX, startY, newType, maxSize) {
-                if (newType === 5) {
-                    // Ormanlar için özel algoritma kullan
-                    this.generateCircularForest(startX, startY, maxSize);
-                    return;
+            findBestRiverDirection(x, y) {
+                let bestDirection = null;
+                let minDistanceToWater = Infinity;
+                
+                const directions = [
+                    {dx: -1, dy: 0}, {dx: 1, dy: 0},
+                    {dx: 0, dy: -1}, {dx: 0, dy: 1},
+                    {dx: -1, dy: -1}, {dx: 1, dy: -1},
+                    {dx: -1, dy: 1}, {dx: 1, dy: 1}
+                ];
+                
+                for (const dir of directions) {
+                    const nx = x + dir.dx;
+                    const ny = y + dir.dy;
+                    
+                    if (!this.isValidPosition(nx, ny)) continue;
+                    
+                    // Check distance to nearest water or edge
+                    const distanceToEdge = Math.min(nx, ny, this.width - nx - 1, this.height - ny - 1);
+                    
+                    if (distanceToEdge < minDistanceToWater) {
+                        minDistanceToWater = distanceToEdge;
+                        bestDirection = dir;
+                    }
+                    
+                    // Prefer directions toward existing water
+                    if (this.map[ny][nx] === 3 || this.map[ny][nx] === 4) {
+                        return dir;
+                    }
                 }
                 
-                const stack = [[startX, startY]];
-                const visited = new Set();
-                let filled = 0;
+                return bestDirection;
+            }
+
+            // Add forests to suitable areas
+            generateForests() {
+                // Add forests to plains areas that aren't too close to water
+                for (let y = 1; y < this.height - 1; y++) {
+                    for (let x = 1; x < this.width - 1; x++) {
+                        if (this.map[y][x] === 1) {
+                            // Check if there's water nearby (don't put forest too close to coast)
+                            let nearWater = false;
+                            for (let dy = -2; dy <= 2; dy++) {
+                                for (let dx = -2; dx <= 2; dx++) {
+                                    const nx = x + dx;
+                                    const ny = y + dy;
+                                    if (this.isValidPosition(nx, ny) && 
+                                        (this.map[ny][nx] === 3 || this.map[ny][nx] === 4)) {
+                                        nearWater = true;
+                                        break;
+                                    }
+                                }
+                                if (nearWater) break;
+                            }
+                            
+                            // Add forest with higher probability if not near water
+                            if (!nearWater && Math.random() < 0.4) {
+                                this.map[y][x] = 5;
+                            } else if (Math.random() < 0.1) {
+                                this.map[y][x] = 5;
+                            }
+                        }
+                    }
+                }
                 
-                while (stack.length > 0 && filled < maxSize) {
-                    const [x, y] = stack.pop();
+                // Create forest clusters
+                this.createForestClusters();
+            }
+
+            createForestClusters() {
+                const numClusters = Math.floor(Math.random() * 3) + 2;
+                
+                for (let cluster = 0; cluster < numClusters; cluster++) {
+                    // Find a plains area for forest cluster
+                    let centerX, centerY;
+                    let attempts = 0;
+                    
+                    do {
+                        centerX = Math.floor(Math.random() * this.width);
+                        centerY = Math.floor(Math.random() * this.height);
+                        attempts++;
+                    } while (attempts < 30 && this.map[centerY][centerX] !== 1);
+                    
+                    if (attempts < 30) {
+                        const clusterSize = Math.floor(Math.random() * 15) + 8;
+                        this.growForestCluster(centerX, centerY, clusterSize);
+                    }
+                }
+            }
+
+            growForestCluster(centerX, centerY, maxSize) {
+                const queue = [[centerX, centerY]];
+                const visited = new Set();
+                let grown = 0;
+                
+                while (queue.length > 0 && grown < maxSize) {
+                    const [x, y] = queue.shift();
                     const key = `${x},${y}`;
                     
                     if (visited.has(key) || !this.isValidPosition(x, y)) continue;
-                    
-                    // Su için özel kontrol
-                    if ((newType === 3 || newType === 4) && (this.map[y][x] === 3 || this.map[y][x] === 4)) {
-                        visited.add(key);
-                        continue;
-                    }
-                    
-                    if (this.map[y][x] !== 1 && this.map[y][x] !== newType) {
-                        visited.add(key);
-                        continue;
-                    }
+                    if (this.map[y][x] !== 1) continue; // Only grow on plains
                     
                     visited.add(key);
-                    this.map[y][x] = newType;
-                    filled++;
+                    this.map[y][x] = 5;
+                    grown++;
                     
-                    // Komşu hücreleri ekle
+                    // Add neighbors
                     const neighbors = [
-                        [x-1, y], [x+1, y], [x, y-1], [x, y+1],
-                        [x-1, y-1], [x+1, y-1], [x-1, y+1], [x+1, y+1]
+                        [x-1, y], [x+1, y], [x, y-1], [x, y+1]
                     ];
                     
                     for (const [nx, ny] of neighbors) {
-                        if (Math.random() < 0.7) { // Rastgelelik ekle
-                            stack.push([nx, ny]);
+                        if (Math.random() < 0.7) {
+                            queue.push([nx, ny]);
                         }
                     }
                 }
@@ -899,19 +679,13 @@
             }
 
             generate() {
-                this.initializeMap();
+                this.initializeMap(); // Start with all water
                 
-                // 1. Yükseklik haritası oluştur
-                const heightMap = this.generateHeightMap();
-                
-                // 2. Su kütlelerini yerleştir (yükseklik bazlı)
-                this.generateRealisticWater(heightMap);
-                
-                // 3. Dağları yerleştir (yüksek rakım)
-                this.generateRealisticMountains(heightMap);
-                
-                // 4. Ormanları yerleştir (orta rakım, su olmayan)
-                this.generateRealisticForests(heightMap);
+                // Generate the archipelago
+                this.generateIslands();   // Create main landmasses
+                this.generateLakes();     // Add inland lakes
+                this.generateRivers();    // Add rivers from mountains to sea
+                this.generateForests();   // Add forest coverage
                 
                 return {
                     width: this.width,
@@ -965,7 +739,7 @@
                         this.ctx.fillStyle = this.colors[this.map[y][x]];
                         this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
                         
-                        // Izgara çizgileri
+                        // Grid lines for larger cells
                         if (this.cellSize >= 6) {
                             this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
                             this.ctx.lineWidth = 0.5;
@@ -997,7 +771,7 @@
                     this.isDrawing = false;
                 });
 
-                // Dokunmatik destek
+                // Touch support
                 this.canvas.addEventListener('touchstart', (e) => {
                     if (!this.isEditMode) return;
                     e.preventDefault();
@@ -1033,7 +807,6 @@
                 
                 this.paintArea(x, y, this.currentBrush, this.brushSize);
                 this.redrawCanvas();
-                // Kod üretimini kaldır - sadece buton tıklandığında olacak
             }
 
             paintArea(centerX, centerY, surfaceType, brushSize) {
@@ -1045,7 +818,7 @@
                         const y = centerY + dy;
                         
                         if (this.isValidPosition(x, y)) {
-                            // Dairesel fırça
+                            // Circular brush
                             const distance = Math.sqrt(dx * dx + dy * dy);
                             if (distance <= radius) {
                                 this.map[y][x] = surfaceType;
@@ -1073,17 +846,16 @@
             clearMap() {
                 this.initializeMap();
                 this.redrawCanvas();
-                // Kod üretimini kaldır
             }
 
             updateCodeOutput() {
-                // Manuel kod güncelleme fonksiyonu - buton tıklandığında çağrılacak
+                // Manual code update function
                 const csharpOutput = document.querySelector('.json-output');
                 if (csharpOutput) {
                     csharpOutput.textContent = this.generateCSharpSeedData();
                 }
                 
-                // JSON output'u da güncelle
+                // Update JSON output too
                 const jsonOutputs = document.querySelectorAll('.json-output');
                 if (jsonOutputs.length > 1) {
                     const mapData = {
@@ -1097,17 +869,6 @@
         }
 
         let currentGenerator = null;
-
-        // Update code output function
-        function updateCode() {
-            if (!currentGenerator) {
-                alert('Please generate a map first!');
-                return;
-            }
-            
-            currentGenerator.updateCodeOutput();
-            alert('Code updated successfully!');
-        }
 
         function generateMap() {
             const loading = document.getElementById('loading');
@@ -1205,7 +966,7 @@
             }
         }
 
-        // Fırça seçimi
+        // Brush selection
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.brush-item').forEach(item => {
                 item.addEventListener('click', () => {
@@ -1218,7 +979,7 @@
                 });
             });
 
-            // Fırça boyutu
+            // Brush size
             const brushSize = document.getElementById('brushSize');
             const brushSizeValue = document.getElementById('brushSizeValue');
             

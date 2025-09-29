@@ -1,321 +1,84 @@
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Herba Map Creator v.0.0.2</title>
+    <title>Herba Map Creator v.0.0.3</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            padding: 30px;
-            max-width: 1200px;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 2.5rem;
-        }
-
-        .controls {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        label {
-            font-weight: 600;
-            color: #555;
-        }
-
-        input, button {
-            padding: 12px 20px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
-        }
-
-        button {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .map-container {
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .map-visual {
-            border: 3px solid #333;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        .code-section {
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        .json-output {
-            background: #1a1a1a;
-            color: #0f0;
-            border-radius: 10px;
-            padding: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            max-height: 400px;
-            overflow: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            border: 2px solid #333;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .legend {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255,255,255,0.8);
-            padding: 8px 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            border: 1px solid #333;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            color: #667eea;
-            font-size: 18px;
-            margin: 20px 0;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .loading {
-            animation: pulse 1.5s infinite;
-        }
-
-        .edit-controls {
-            background: rgba(255,255,255,0.9);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .edit-controls h3 {
-            margin: 0 0 15px 0;
-            color: #333;
-            text-align: center;
-        }
-
-        .brush-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .brush-item {
-            padding: 10px 15px;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            text-align: center;
-            min-width: 120px;
-        }
-
-        .brush-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .brush-item.active {
-            border-color: #333;
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(0,0,0,0.3);
-        }
-
-        .brush-size {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .brush-size input[type="range"] {
-            width: 150px;
-        }
-
-        .brush-size label, .brush-size span {
-            font-weight: 600;
-            color: #555;
-        }
-
-        .map-visual {
-            cursor: crosshair;
-        }
-
-        .map-visual.editing {
-            cursor: crosshair;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); padding: 30px; max-width: 1200px; width: 100%; margin-bottom: 20px; }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.5rem; }
+        .controls { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; align-items: center; justify-content: center; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-weight: 600; color: #555; }
+        input, button { padding: 12px 20px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; transition: all 0.3s ease; }
+        input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 10px rgba(102, 126, 234, 0.3); }
+        button { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; cursor: pointer; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3); }
+        .map-container { display: flex; flex-direction: column; gap: 30px; align-items: center; flex-wrap: wrap; justify-content: center; }
+        .map-visual { border: 3px solid #333; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); cursor: crosshair; }
+        .code-section { width: 100%; max-width: 1000px; }
+        .json-output { background: #1a1a1a; color: #0f0; border-radius: 10px; padding: 20px; font-family: 'Courier New', monospace; font-size: 12px; max-height: 400px; overflow: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 2px solid #333; width: 100%; box-sizing: border-box; }
+        .legend { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .legend-color { width: 20px; height: 20px; border-radius: 4px; border: 1px solid #333; }
+        .loading { display: none; text-align: center; color: #667eea; font-size: 18px; margin: 20px 0; animation: pulse 1.5s infinite; }
+        .loading.show { display: block; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .edit-controls { background: rgba(255,255,255,0.9); border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .edit-controls h3 { margin: 0 0 15px 0; color: #333; text-align: center; }
+        .brush-selector { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; justify-content: center; }
+        .brush-item { padding: 10px 15px; border: 2px solid transparent; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; font-weight: 600; text-align: center; min-width: 120px; }
+        .brush-item:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .brush-item.active { border-color: #333; transform: scale(1.05); box-shadow: 0 0 15px rgba(0,0,0,0.3); }
+        .brush-size { display: flex; align-items: center; gap: 10px; justify-content: center; }
+        .brush-size input[type="range"] { width: 150px; }
+        .brush-size label, .brush-size span { font-weight: 600; color: #555; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🗺️ Herba Map Creator v.0.0.2</h1>
-        
+        <h1>Herba Map Creator v.0.0.3</h1>
         <div class="controls">
-            <div class="input-group">
-                <label for="width">Width (X):</label>
-                <input type="number" id="width" value="100" min="10" max="200">
-            </div>
-            <div class="input-group">
-                <label for="height">Height (Y):</label>
-                <input type="number" id="height" value="100" min="10" max="200">
-            </div>
-            <button onclick="generateMap()">🎲 Generate Map</button>
-            <button onclick="updateCode()">🔄 Update Code</button>
-            <button onclick="copyToClipboard()">📋 Copy C# Code</button>
-            <button onclick="toggleEditMode()" id="editModeBtn">🖌️ Editor Mode</button>
-            <button onclick="clearMap()" style="background: linear-gradient(135deg, #ff6b6b, #ee5a5a);">🗑️ Clear Map</button>
+            <div class="input-group"><label for="width">Width (X):</label><input type="number" id="width" value="100" min="10" max="200"></div>
+            <div class="input-group"><label for="height">Height (Y):</label><input type="number" id="height" value="100" min="10" max="200"></div>
+            <button onclick="generateMap()">Generate Map</button>
+            <button onclick="updateCode()">Update Code</button>
+            <button onclick="copyToClipboard()">Copy C# Code</button>
+            <button onclick="toggleEditMode()" id="editModeBtn">Editor Mode</button>
+            <button onclick="clearMap()" style="background: linear-gradient(135deg, #ff6b6b, #ee5a5a);">Clear Map</button>
         </div>
-
         <div id="editControls" class="edit-controls" style="display: none;">
-            <h3>🎨 Drawing Tools</h3>
+            <h3>Drawing Tools</h3>
             <div class="brush-selector">
-                <div class="brush-item" data-surface="1" style="background: lightgreen;">
-                    <span>1 - Plains</span>
-                </div>
-                <div class="brush-item active" data-surface="2" style="background: gray; color: white;">
-                    <span>2 - Mountains</span>
-                </div>
-                <div class="brush-item" data-surface="3" style="background: blue; color: white;">
-                    <span>3 - Shallow Water</span>
-                </div>
-                <div class="brush-item" data-surface="4" style="background: darkblue; color: white;">
-                    <span>4 - Deep Water</span>
-                </div>
-                <div class="brush-item" data-surface="5" style="background: darkgreen; color: white;">
-                    <span>5 - Forest</span>
-                </div>
+                <div class="brush-item" data-surface="1" style="background: lightgreen;"><span>1 - Plains</span></div>
+                <div class="brush-item active" data-surface="2" style="background: gray; color: white;"><span>2 - Mountains</span></div>
+                <div class="brush-item" data-surface="3" style="background: blue; color: white;"><span>3 - Shallow Water</span></div>
+                <div class="brush-item" data-surface="4" style="background: darkblue; color: white;"><span>4 - Deep Water</span></div>
+                <div class="brush-item" data-surface="5" style="background: darkgreen; color: white;"><span>5 - Forest</span></div>
+                <div class="brush-item" data-surface="6" style="background: #f4a460; color: white;"><span>6 - Sand</span></div>
             </div>
-            <div class="brush-size">
-                <label>Brush Size:</label>
-                <input type="range" id="brushSize" min="1" max="5" value="1">
-                <span id="brushSizeValue">1</span>
-            </div>
+            <div class="brush-size"><label>Brush Size:</label><input type="range" id="brushSize" min="1" max="5" value="1"><span id="brushSizeValue">1</span></div>
         </div>
-
         <div class="legend">
-            <div class="legend-item">
-                <div class="legend-color" style="background: lightgreen;"></div>
-                <span>1 - Plains</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: gray;"></div>
-                <span>2 - Mountains</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: blue;"></div>
-                <span>3 - Shallow Water</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: darkblue;"></div>
-                <span>4 - Deep Water</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: darkgreen;"></div>
-                <span>5 - Forest</span>
-            </div>
+            <div class="legend-item"><div class="legend-color" style="background: lightgreen;"></div><span>1 - Plains</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: gray;"></div><span>2 - Mountains</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: blue;"></div><span>3 - Shallow Water</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: darkblue;"></div><span>4 - Deep Water</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: darkgreen;"></div><span>5 - Forest</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #f4a460;"></div><span>6 - Sand</span></div>
         </div>
-
         <div class="loading" id="loading">Generating map...</div>
-
         <div class="map-container" id="mapContainer"></div>
     </div>
-
     <script>
+        let currentGenerator = null;
+
         function updateCode() {
             if (!currentGenerator) {
                 alert('Please generate a map first!');
                 return;
             }
-            
             currentGenerator.updateCodeOutput();
             alert('Code updated successfully!');
         }
@@ -325,13 +88,7 @@
                 this.width = width;
                 this.height = height;
                 this.map = [];
-                this.colors = {
-                    1: 'lightgreen', // Plains
-                    2: 'gray',       // Mountains
-                    3: 'blue',       // Shallow water
-                    4: 'darkblue',   // Deep water
-                    5: 'darkgreen'   // Forest
-                };
+                this.colors = { 1: 'lightgreen', 2: 'gray', 3: 'blue', 4: 'darkblue', 5: 'darkgreen', 6: '#f4a460' };
                 this.isEditMode = false;
                 this.currentBrush = 2;
                 this.brushSize = 1;
@@ -343,166 +100,105 @@
             }
 
             initializeMap() {
-                // Start with all deep water
-                this.map = Array(this.height).fill(null).map(() => 
-                    Array(this.width).fill(4)
-                );
+                this.map = Array(this.height).fill(null).map(() => Array(this.width).fill(4));
             }
 
-            // Improved noise function for better terrain
             noise(x, y, frequency = 0.1) {
                 const xi = Math.floor(x * frequency);
                 const yi = Math.floor(y * frequency);
-                
-                // Simple hash-based noise
                 const hash = (xi * 374761393 + yi * 668265263) % 1000000;
                 return (hash / 1000000.0) * 2 - 1;
             }
 
-            // Multi-octave noise
             multiNoise(x, y, octaves = 4, persistence = 0.5, scale = 0.02) {
                 let value = 0;
                 let amplitude = 1;
                 let frequency = scale;
                 let maxValue = 0;
-
                 for (let i = 0; i < octaves; i++) {
                     value += this.noise(x, y, frequency) * amplitude;
                     maxValue += amplitude;
                     amplitude *= persistence;
                     frequency *= 2;
                 }
-
                 return value / maxValue;
             }
 
-            // Generate islands using noise
             generateIslands() {
-                const numIslands = Math.floor(Math.random() * 4) + 2; // 2-5 islands
-                
+                const numIslands = Math.floor(Math.random() * 4) + 2;
                 for (let island = 0; island < numIslands; island++) {
-                    // Random island center
                     const centerX = Math.floor(Math.random() * (this.width - 40)) + 20;
                     const centerY = Math.floor(Math.random() * (this.height - 40)) + 20;
-                    
-                    // Island size
                     const maxRadius = Math.floor(Math.random() * 25) + 15;
-                    
                     this.createIsland(centerX, centerY, maxRadius);
                 }
             }
 
             createIsland(centerX, centerY, maxRadius) {
-                // Create island using noise-based height map
                 for (let y = centerY - maxRadius; y <= centerY + maxRadius; y++) {
                     for (let x = centerX - maxRadius; x <= centerX + maxRadius; x++) {
                         if (!this.isValidPosition(x, y)) continue;
-                        
                         const distanceFromCenter = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-                        
                         if (distanceFromCenter <= maxRadius) {
-                            // Use noise to create irregular coastline
                             const noiseValue = this.multiNoise(x, y, 6, 0.6, 0.05);
                             const heightFromDistance = 1 - (distanceFromCenter / maxRadius);
-                            
-                            // Combine distance falloff with noise for natural coastlines
                             const finalHeight = heightFromDistance + noiseValue * 0.3;
-                            
                             if (finalHeight > 0.2) {
-                                // Create elevation zones
-                                if (finalHeight > 0.8) {
-                                    this.map[y][x] = 2; // Mountains at peaks
-                                } else if (finalHeight > 0.6) {
-                                    this.map[y][x] = Math.random() < 0.7 ? 1 : 5; // Mix of plains and forest
-                                } else if (finalHeight > 0.4) {
-                                    this.map[y][x] = 1; // Plains
-                                } else {
-                                    this.map[y][x] = 3; // Shallow water near coast
-                                }
+                                if (finalHeight > 0.8) this.map[y][x] = 2;
+                                else if (finalHeight > 0.6) this.map[y][x] = Math.random() < 0.7 ? 1 : 5;
+                                else if (finalHeight > 0.4) this.map[y][x] = 1;
+                                else this.map[y][x] = 3;
                             }
                         }
                     }
                 }
             }
 
-            // Generate inland lakes on islands
             generateLakes() {
                 const numLakes = Math.floor(Math.random() * 3) + 1;
-                
                 for (let i = 0; i < numLakes; i++) {
-                    // Find a suitable location on land
                     let attempts = 0;
                     let lakeX, lakeY;
-                    
                     do {
                         lakeX = Math.floor(Math.random() * this.width);
                         lakeY = Math.floor(Math.random() * this.height);
                         attempts++;
                     } while (attempts < 50 && (this.map[lakeY][lakeX] === 3 || this.map[lakeY][lakeX] === 4));
-                    
-                    if (attempts < 50) {
-                        this.createLake(lakeX, lakeY);
-                    }
+                    if (attempts < 50) this.createLake(lakeX, lakeY);
                 }
             }
 
             createLake(centerX, centerY) {
                 const lakeSize = Math.floor(Math.random() * 8) + 3;
-                
-                // Use flood fill with size limit
                 const queue = [[centerX, centerY]];
                 const visited = new Set();
                 let filled = 0;
-                
                 while (queue.length > 0 && filled < lakeSize) {
                     const [x, y] = queue.shift();
                     const key = `${x},${y}`;
-                    
                     if (visited.has(key) || !this.isValidPosition(x, y)) continue;
-                    if (this.map[y][x] === 3 || this.map[y][x] === 4) continue; // Don't create lakes in existing water
-                    
+                    if (this.map[y][x] === 3 || this.map[y][x] === 4) continue;
                     visited.add(key);
-                    
-                    // Create deep water in center, shallow water on edges
-                    if (filled < lakeSize * 0.4) {
-                        this.map[y][x] = 4; // Deep water
-                    } else {
-                        this.map[y][x] = 3; // Shallow water
-                    }
-                    
+                    this.map[y][x] = filled < lakeSize * 0.4 ? 4 : 3;
                     filled++;
-                    
-                    // Add neighbors with some randomness
-                    const neighbors = [
-                        [x-1, y], [x+1, y], [x, y-1], [x, y+1]
-                    ];
-                    
+                    const neighbors = [[x-1, y], [x+1, y], [x, y-1], [x, y+1]];
                     for (const [nx, ny] of neighbors) {
-                        if (Math.random() < 0.6) { // 60% chance to spread
-                            queue.push([nx, ny]);
-                        }
+                        if (Math.random() < 0.6) queue.push([nx, ny]);
                     }
                 }
             }
 
-            // Generate rivers flowing from mountains to sea
             generateRivers() {
                 const numRivers = Math.floor(Math.random() * 4) + 2;
-                
                 for (let i = 0; i < numRivers; i++) {
-                    // Find a mountain start point
                     let startX, startY;
                     let attempts = 0;
-                    
                     do {
                         startX = Math.floor(Math.random() * this.width);
                         startY = Math.floor(Math.random() * this.height);
                         attempts++;
                     } while (attempts < 30 && this.map[startY][startX] !== 2);
-                    
-                    if (attempts < 30) {
-                        this.traceRiver(startX, startY);
-                    }
+                    if (attempts < 30) this.traceRiver(startX, startY);
                 }
             }
 
@@ -511,45 +207,26 @@
                 let currentY = startY;
                 const maxLength = 50;
                 const visited = new Set();
-                
                 for (let step = 0; step < maxLength; step++) {
                     const key = `${currentX},${currentY}`;
                     if (visited.has(key) || !this.isValidPosition(currentX, currentY)) break;
-                    
                     visited.add(key);
-                    
-                    // Stop if we reach existing water
-                    if (this.map[currentY][currentX] === 3 || this.map[currentY][currentX] === 4) {
-                        break;
-                    }
-                    
-                    // Create shallow water for river
+                    if (this.map[currentY][currentX] === 3 || this.map[currentY][currentX] === 4) break;
                     if (this.map[currentY][currentX] === 1 || this.map[currentY][currentX] === 5) {
                         this.map[currentY][currentX] = 3;
                     }
-                    
-                    // Find direction towards nearest water or edge
                     let bestDirection = this.findBestRiverDirection(currentX, currentY);
-                    
                     if (bestDirection) {
                         currentX += bestDirection.dx;
                         currentY += bestDirection.dy;
                     } else {
-                        // Random direction if no clear path
                         const directions = [[-1,0], [1,0], [0,-1], [0,1]];
                         const randomDir = directions[Math.floor(Math.random() * directions.length)];
                         currentX += randomDir[0];
                         currentY += randomDir[1];
                     }
-                    
-                    // Add some randomness to river path
-                    if (Math.random() < 0.3) {
-                        currentX += Math.random() < 0.5 ? -1 : 1;
-                    }
-                    if (Math.random() < 0.3) {
-                        currentY += Math.random() < 0.5 ? -1 : 1;
-                    }
-                    
+                    if (Math.random() < 0.3) currentX += Math.random() < 0.5 ? -1 : 1;
+                    if (Math.random() < 0.3) currentY += Math.random() < 0.5 ? -1 : 1;
                     currentX = Math.max(0, Math.min(this.width - 1, currentX));
                     currentY = Math.max(0, Math.min(this.height - 1, currentY));
                 }
@@ -558,59 +235,124 @@
             findBestRiverDirection(x, y) {
                 let bestDirection = null;
                 let minDistanceToWater = Infinity;
-                
                 const directions = [
-                    {dx: -1, dy: 0}, {dx: 1, dy: 0},
-                    {dx: 0, dy: -1}, {dx: 0, dy: 1},
-                    {dx: -1, dy: -1}, {dx: 1, dy: -1},
-                    {dx: -1, dy: 1}, {dx: 1, dy: 1}
+                    {dx: -1, dy: 0}, {dx: 1, dy: 0}, {dx: 0, dy: -1}, {dx: 0, dy: 1},
+                    {dx: -1, dy: -1}, {dx: 1, dy: -1}, {dx: -1, dy: 1}, {dx: 1, dy: 1}
                 ];
-                
                 for (const dir of directions) {
                     const nx = x + dir.dx;
                     const ny = y + dir.dy;
-                    
                     if (!this.isValidPosition(nx, ny)) continue;
-                    
-                    // Check distance to nearest water or edge
                     const distanceToEdge = Math.min(nx, ny, this.width - nx - 1, this.height - ny - 1);
-                    
                     if (distanceToEdge < minDistanceToWater) {
                         minDistanceToWater = distanceToEdge;
                         bestDirection = dir;
                     }
-                    
-                    // Prefer directions toward existing water
-                    if (this.map[ny][nx] === 3 || this.map[ny][nx] === 4) {
-                        return dir;
-                    }
+                    if (this.map[ny][nx] === 3 || this.map[ny][nx] === 4) return dir;
                 }
-                
                 return bestDirection;
             }
 
-            // Add forests to suitable areas
+            generateSandAreas() {
+                const tempMap = JSON.parse(JSON.stringify(this.map));
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        if (this.map[y][x] === 1) {
+                            let nearShallowWater = false;
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    if (dx === 0 && dy === 0) continue;
+                                    const nx = x + dx;
+                                    const ny = y + dy;
+                                    if (this.isValidPosition(nx, ny) && this.map[ny][nx] === 3) {
+                                        nearShallowWater = true;
+                                        break;
+                                    }
+                                }
+                                if (nearShallowWater) break;
+                            }
+                            if (nearShallowWater && Math.random() < 0.7) {
+                                tempMap[y][x] = 6;
+                            }
+                        }
+                    }
+                }
+                this.map = tempMap;
+                this.generateDesertRegions();
+            }
+
+            generateDesertRegions() {
+                const numDeserts = Math.floor(Math.random() * 3) + 1;
+                for (let desert = 0; desert < numDeserts; desert++) {
+                    let centerX, centerY;
+                    let attempts = 0;
+                    let farFromWater = false;
+                    do {
+                        centerX = Math.floor(Math.random() * this.width);
+                        centerY = Math.floor(Math.random() * this.height);
+                        farFromWater = true;
+                        if (this.map[centerY][centerX] === 1) {
+                            for (let dy = -3; dy <= 3; dy++) {
+                                for (let dx = -3; dx <= 3; dx++) {
+                                    const nx = centerX + dx;
+                                    const ny = centerY + dy;
+                                    if (this.isValidPosition(nx, ny) && (this.map[ny][nx] === 3 || this.map[ny][nx] === 4)) {
+                                        farFromWater = false;
+                                        break;
+                                    }
+                                }
+                                if (!farFromWater) break;
+                            }
+                        } else {
+                            farFromWater = false;
+                        }
+                        attempts++;
+                    } while (attempts < 50 && !farFromWater);
+                    if (attempts < 50 && farFromWater) {
+                        const desertSize = Math.floor(Math.random() * 20) + 10;
+                        this.growDesert(centerX, centerY, desertSize);
+                    }
+                }
+            }
+
+            growDesert(centerX, centerY, maxSize) {
+                const queue = [[centerX, centerY]];
+                const visited = new Set();
+                let grown = 0;
+                while (queue.length > 0 && grown < maxSize) {
+                    const [x, y] = queue.shift();
+                    const key = `${x},${y}`;
+                    if (visited.has(key) || !this.isValidPosition(x, y)) continue;
+                    if (this.map[y][x] !== 1) continue;
+                    visited.add(key);
+                    this.map[y][x] = 6;
+                    grown++;
+                    const neighbors = [
+                        [x-1, y], [x+1, y], [x, y-1], [x, y+1],
+                        [x-1, y-1], [x+1, y-1], [x-1, y+1], [x+1, y+1]
+                    ];
+                    for (const [nx, ny] of neighbors) {
+                        if (Math.random() < 0.6) queue.push([nx, ny]);
+                    }
+                }
+            }
+
             generateForests() {
-                // Add forests to plains areas that aren't too close to water
                 for (let y = 1; y < this.height - 1; y++) {
                     for (let x = 1; x < this.width - 1; x++) {
                         if (this.map[y][x] === 1) {
-                            // Check if there's water nearby (don't put forest too close to coast)
                             let nearWater = false;
                             for (let dy = -2; dy <= 2; dy++) {
                                 for (let dx = -2; dx <= 2; dx++) {
                                     const nx = x + dx;
                                     const ny = y + dy;
-                                    if (this.isValidPosition(nx, ny) && 
-                                        (this.map[ny][nx] === 3 || this.map[ny][nx] === 4)) {
+                                    if (this.isValidPosition(nx, ny) && (this.map[ny][nx] === 3 || this.map[ny][nx] === 4)) {
                                         nearWater = true;
                                         break;
                                     }
                                 }
                                 if (nearWater) break;
                             }
-                            
-                            // Add forest with higher probability if not near water
                             if (!nearWater && Math.random() < 0.4) {
                                 this.map[y][x] = 5;
                             } else if (Math.random() < 0.1) {
@@ -619,25 +361,19 @@
                         }
                     }
                 }
-                
-                // Create forest clusters
                 this.createForestClusters();
             }
 
             createForestClusters() {
                 const numClusters = Math.floor(Math.random() * 3) + 2;
-                
                 for (let cluster = 0; cluster < numClusters; cluster++) {
-                    // Find a plains area for forest cluster
                     let centerX, centerY;
                     let attempts = 0;
-                    
                     do {
                         centerX = Math.floor(Math.random() * this.width);
                         centerY = Math.floor(Math.random() * this.height);
                         attempts++;
                     } while (attempts < 30 && this.map[centerY][centerX] !== 1);
-                    
                     if (attempts < 30) {
                         const clusterSize = Math.floor(Math.random() * 15) + 8;
                         this.growForestCluster(centerX, centerY, clusterSize);
@@ -649,27 +385,17 @@
                 const queue = [[centerX, centerY]];
                 const visited = new Set();
                 let grown = 0;
-                
                 while (queue.length > 0 && grown < maxSize) {
                     const [x, y] = queue.shift();
                     const key = `${x},${y}`;
-                    
                     if (visited.has(key) || !this.isValidPosition(x, y)) continue;
-                    if (this.map[y][x] !== 1) continue; // Only grow on plains
-                    
+                    if (this.map[y][x] !== 1) continue;
                     visited.add(key);
                     this.map[y][x] = 5;
                     grown++;
-                    
-                    // Add neighbors
-                    const neighbors = [
-                        [x-1, y], [x+1, y], [x, y-1], [x, y+1]
-                    ];
-                    
+                    const neighbors = [[x-1, y], [x+1, y], [x, y-1], [x, y+1]];
                     for (const [nx, ny] of neighbors) {
-                        if (Math.random() < 0.7) {
-                            queue.push([nx, ny]);
-                        }
+                        if (Math.random() < 0.7) queue.push([nx, ny]);
                     }
                 }
             }
@@ -679,67 +405,45 @@
             }
 
             generate() {
-                this.initializeMap(); // Start with all water
-                
-                // Generate the archipelago
-                this.generateIslands();   // Create main landmasses
-                this.generateLakes();     // Add inland lakes
-                this.generateRivers();    // Add rivers from mountains to sea
-                this.generateForests();   // Add forest coverage
-                
-                return {
-                    width: this.width,
-                    height: this.height,
-                    map: this.map
-                };
+                this.initializeMap();
+                this.generateIslands();
+                this.generateLakes();
+                this.generateRivers();
+                this.generateSandAreas();
+                this.generateForests();
+                return { width: this.width, height: this.height, map: this.map };
             }
 
             generateCSharpSeedData() {
                 let csharpCode = "var random = new Random();\n";
-                
                 for (let x = 0; x < this.width; x++) {
                     for (let y = 0; y < this.height; y++) {
                         const surfaceId = this.map[y][x];
                         csharpCode += `modelBuilder.Entity<Map>().HasData(\n`;
-                        csharpCode += `    new Map\n`;
-                        csharpCode += `    {\n`;
-                        csharpCode += `        X = ${x},\n`;
-                        csharpCode += `        Y = ${y},\n`;
-                        csharpCode += `        SurfaceId = ${surfaceId},\n`;
-                        csharpCode += `        SpecialName = "",\n`;
-                        csharpCode += `        OwnerId = Guid.Empty\n`;
-                        csharpCode += `    }\n`;
-                        csharpCode += `);\n`;
+                        csharpCode += `    new Map { X = ${x}, Y = ${y}, SurfaceId = ${surfaceId}, SpecialName = "", OwnerId = Guid.Empty }\n);\n`;
                     }
                 }
-                
                 return csharpCode;
             }
 
             visualize() {
                 this.canvas = document.createElement('canvas');
                 this.cellSize = Math.max(3, Math.min(12, 600 / Math.max(this.width, this.height)));
-                
                 this.canvas.width = this.width * this.cellSize;
                 this.canvas.height = this.height * this.cellSize;
                 this.canvas.className = 'map-visual';
-                
                 this.ctx = this.canvas.getContext('2d');
                 this.redrawCanvas();
                 this.setupCanvasEvents();
-                
                 return this.canvas;
             }
 
             redrawCanvas() {
                 if (!this.ctx) return;
-                
                 for (let y = 0; y < this.height; y++) {
                     for (let x = 0; x < this.width; x++) {
                         this.ctx.fillStyle = this.colors[this.map[y][x]];
                         this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
-                        
-                        // Grid lines for larger cells
                         if (this.cellSize >= 6) {
                             this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
                             this.ctx.lineWidth = 0.5;
@@ -751,79 +455,53 @@
 
             setupCanvasEvents() {
                 if (!this.canvas) return;
-                
                 this.canvas.addEventListener('mousedown', (e) => {
                     if (!this.isEditMode) return;
                     this.isDrawing = true;
                     this.drawOnCanvas(e);
                 });
-
                 this.canvas.addEventListener('mousemove', (e) => {
                     if (!this.isEditMode || !this.isDrawing) return;
                     this.drawOnCanvas(e);
                 });
-
-                this.canvas.addEventListener('mouseup', () => {
-                    this.isDrawing = false;
-                });
-
-                this.canvas.addEventListener('mouseleave', () => {
-                    this.isDrawing = false;
-                });
-
-                // Touch support
+                this.canvas.addEventListener('mouseup', () => { this.isDrawing = false; });
+                this.canvas.addEventListener('mouseleave', () => { this.isDrawing = false; });
                 this.canvas.addEventListener('touchstart', (e) => {
                     if (!this.isEditMode) return;
                     e.preventDefault();
                     this.isDrawing = true;
                     const touch = e.touches[0];
-                    const mouseEvent = new MouseEvent('mousedown', {
-                        clientX: touch.clientX,
-                        clientY: touch.clientY
-                    });
-                    this.drawOnCanvas(mouseEvent);
+                    this.drawOnCanvas(new MouseEvent('mousedown', { clientX: touch.clientX, clientY: touch.clientY }));
                 });
-
                 this.canvas.addEventListener('touchmove', (e) => {
                     if (!this.isEditMode || !this.isDrawing) return;
                     e.preventDefault();
                     const touch = e.touches[0];
-                    const mouseEvent = new MouseEvent('mousemove', {
-                        clientX: touch.clientX,
-                        clientY: touch.clientY
-                    });
-                    this.drawOnCanvas(mouseEvent);
+                    this.drawOnCanvas(new MouseEvent('mousemove', { clientX: touch.clientX, clientY: touch.clientY }));
                 });
-
-                this.canvas.addEventListener('touchend', () => {
-                    this.isDrawing = false;
-                });
+                this.canvas.addEventListener('touchend', () => { this.isDrawing = false; });
             }
 
             drawOnCanvas(e) {
                 const rect = this.canvas.getBoundingClientRect();
                 const x = Math.floor((e.clientX - rect.left) / this.cellSize);
                 const y = Math.floor((e.clientY - rect.top) / this.cellSize);
-                
                 this.paintArea(x, y, this.currentBrush, this.brushSize);
                 this.redrawCanvas();
             }
 
             paintArea(centerX, centerY, surfaceType, brushSize) {
                 const radius = Math.floor(brushSize / 2);
-                
                 for (let dx = -radius; dx <= radius; dx++) {
                     for (let dy = -radius; dy <= radius; dy++) {
                         const x = centerX + dx;
                         const y = centerY + dy;
-                        
                         if (this.isValidPosition(x, y)) {
-                            // Circular brush
                             const distance = Math.sqrt(dx * dx + dy * dy);
                             if (distance <= radius) {
                                 this.map[y][x] = surfaceType;
                             }
-                        }
+                }
                     }
                 }
             }
@@ -849,89 +527,58 @@
             }
 
             updateCodeOutput() {
-                // Manual code update function
                 const csharpOutput = document.querySelector('.json-output');
                 if (csharpOutput) {
                     csharpOutput.textContent = this.generateCSharpSeedData();
                 }
-                
-                // Update JSON output too
                 const jsonOutputs = document.querySelectorAll('.json-output');
                 if (jsonOutputs.length > 1) {
-                    const mapData = {
+                    jsonOutputs[1].textContent = JSON.stringify({
                         width: this.width,
                         height: this.height,
                         map: this.map
-                    };
-                    jsonOutputs[1].textContent = JSON.stringify(mapData, null, 2);
+                    }, null, 2);
                 }
             }
         }
 
-        let currentGenerator = null;
-
         function generateMap() {
             const loading = document.getElementById('loading');
             const mapContainer = document.getElementById('mapContainer');
-            
             loading.classList.add('show');
             mapContainer.innerHTML = '';
-            
             setTimeout(() => {
                 const width = parseInt(document.getElementById('width').value);
                 const height = parseInt(document.getElementById('height').value);
-                
                 if (width < 10 || width > 200 || height < 10 || height > 200) {
                     alert('Please enter values between 10-200.');
                     loading.classList.remove('show');
                     return;
                 }
-                
                 currentGenerator = new MapGenerator(width, height);
                 const mapData = currentGenerator.generate();
-                
-                // Visual map
                 const canvas = currentGenerator.visualize();
-                
-                // Code section container
                 const codeSection = document.createElement('div');
                 codeSection.className = 'code-section';
-                
-                // C# Entity Framework Seed Data
                 const csharpTitle = document.createElement('h3');
                 csharpTitle.textContent = 'C# Entity Framework Seed Data:';
-                csharpTitle.style.color = '#333';
-                csharpTitle.style.marginTop = '20px';
-                csharpTitle.style.marginBottom = '10px';
-                csharpTitle.style.textAlign = 'center';
-                
+                csharpTitle.style.cssText = 'color:#333;margin:20px 0 10px;text-align:center';
                 const csharpOutput = document.createElement('pre');
                 csharpOutput.className = 'json-output';
-                csharpOutput.style.fontSize = '10px';
-                csharpOutput.style.lineHeight = '1.2';
+                csharpOutput.style.cssText = 'font-size:10px;line-height:1.2';
                 csharpOutput.textContent = currentGenerator.generateCSharpSeedData();
-                
-                // JSON format (Optional)
                 const jsonTitle = document.createElement('h3');
                 jsonTitle.textContent = 'JSON Format (Optional):';
-                jsonTitle.style.color = '#333';
-                jsonTitle.style.marginTop = '20px';
-                jsonTitle.style.marginBottom = '10px';
-                jsonTitle.style.textAlign = 'center';
-                
+                jsonTitle.style.cssText = 'color:#333;margin:20px 0 10px;text-align:center';
                 const jsonOutput = document.createElement('pre');
                 jsonOutput.className = 'json-output';
                 jsonOutput.textContent = JSON.stringify(mapData, null, 2);
-                
-                // Add everything to containers
                 codeSection.appendChild(csharpTitle);
                 codeSection.appendChild(csharpOutput);
                 codeSection.appendChild(jsonTitle);
                 codeSection.appendChild(jsonOutput);
-                
                 mapContainer.appendChild(canvas);
                 mapContainer.appendChild(codeSection);
-                
                 loading.classList.remove('show');
             }, 500);
         }
@@ -939,19 +586,16 @@
         function toggleEditMode() {
             const editControls = document.getElementById('editControls');
             const editModeBtn = document.getElementById('editModeBtn');
-            
             if (!currentGenerator) {
                 alert('Please generate a map first!');
                 return;
             }
-            
             const isEditMode = editControls.style.display === 'none';
             editControls.style.display = isEditMode ? 'block' : 'none';
             editModeBtn.textContent = isEditMode ? '🔒 Close Editor' : '🖌️ Editor Mode';
             editModeBtn.style.background = isEditMode ? 
                 'linear-gradient(135deg, #ff6b6b, #ee5a5a)' : 
                 'linear-gradient(135deg, #667eea, #764ba2)';
-            
             currentGenerator.setEditMode(isEditMode);
         }
 
@@ -960,39 +604,10 @@
                 alert('Please generate a map first!');
                 return;
             }
-            
             if (confirm('Are you sure you want to clear the entire map?')) {
                 currentGenerator.clearMap();
             }
         }
-
-        // Brush selection
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.brush-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    document.querySelectorAll('.brush-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
-                    
-                    if (currentGenerator) {
-                        currentGenerator.setBrush(parseInt(item.dataset.surface));
-                    }
-                });
-            });
-
-            // Brush size
-            const brushSize = document.getElementById('brushSize');
-            const brushSizeValue = document.getElementById('brushSizeValue');
-            
-            brushSize.addEventListener('input', () => {
-                brushSizeValue.textContent = brushSize.value;
-                if (currentGenerator) {
-                    currentGenerator.setBrushSize(brushSize.value);
-                }
-            });
-        });
-
-        // Page load - automatically generate map
-        window.onload = () => generateMap();
 
         function copyToClipboard() {
             const csharpOutput = document.querySelector('.json-output');
@@ -1000,7 +615,6 @@
                 navigator.clipboard.writeText(csharpOutput.textContent).then(() => {
                     alert('C# seed data copied to clipboard!');
                 }).catch(() => {
-                    // Fallback for older browsers
                     const textArea = document.createElement('textarea');
                     textArea.value = csharpOutput.textContent;
                     document.body.appendChild(textArea);
@@ -1012,23 +626,39 @@
             }
         }
 
-        // Keyboard shortcuts
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.brush-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.brush-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    if (currentGenerator) {
+                        currentGenerator.setBrush(parseInt(item.dataset.surface));
+                    }
+                });
+            });
+            const brushSize = document.getElementById('brushSize');
+            const brushSizeValue = document.getElementById('brushSizeValue');
+            brushSize.addEventListener('input', () => {
+                brushSizeValue.textContent = brushSize.value;
+                if (currentGenerator) {
+                    currentGenerator.setBrushSize(brushSize.value);
+                }
+            });
+        });
+
+        window.onload = () => generateMap();
+
         document.addEventListener('keydown', (e) => {
             if (!currentGenerator || !currentGenerator.isEditMode) return;
-            
             const key = e.key;
-            if (key >= '1' && key <= '5') {
+            if (key >= '1' && key <= '6') {
                 const surface = parseInt(key);
                 currentGenerator.setBrush(surface);
-                
-                // Update active brush in UI
                 document.querySelectorAll('.brush-item').forEach(item => {
                     item.classList.toggle('active', parseInt(item.dataset.surface) === surface);
                 });
                 e.preventDefault();
             }
-            
-            // Brush size
             if (e.key === '+' || e.key === '=') {
                 const brushSize = document.getElementById('brushSize');
                 if (parseInt(brushSize.value) < 5) {
@@ -1038,7 +668,6 @@
                 }
                 e.preventDefault();
             }
-            
             if (e.key === '-') {
                 const brushSize = document.getElementById('brushSize');
                 if (parseInt(brushSize.value) > 1) {
